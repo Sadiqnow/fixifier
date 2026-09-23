@@ -1,0 +1,9 @@
+<?php
+namespace App\Http\Controllers\Api\V1;
+use App\Http\Controllers\Controller; use App\Models\{KycDocument,TechnicianProfile}; use App\Services\Audit; use Illuminate\Http\{JsonResponse,Request};
+class KycController extends Controller {
+ public function submit(Request $r):JsonResponse{abort_unless($r->user()->role->value==='technician',403);$d=$r->validate(['type'=>'required|in:nin,drivers_licence,voters_card,passport,cac','document'=>'required|file|mimes:jpg,jpeg,png,pdf|max:5120']);$path=$d['document']->store("kyc/{$r->user()->id}",'private');$doc=KycDocument::create(['technician_id'=>$r->user()->id,'type'=>$d['type'],'storage_path'=>$path]);TechnicianProfile::where('user_id',$r->user()->id)->update(['kyc_status'=>'under_review']);Audit::record('kyc.submitted',$doc);return response()->json(['data'=>$doc],201);}
+ public function pending(Request $r):JsonResponse{$this->admin($r);return response()->json(KycDocument::where('status','pending')->latest()->paginate(20));}
+ public function review(Request $r,KycDocument $document):JsonResponse{$this->admin($r);$d=$r->validate(['decision'=>'required|in:approve,reject','reason'=>'required_if:decision,reject|nullable|string|max:1000']);$status=$d['decision']==='approve'?'approved':'rejected';$document->update(['status'=>$status,'rejection_reason'=>$d['reason']??null,'reviewed_by'=>$r->user()->id,'reviewed_at'=>now()]);$base=KycDocument::where('technician_id',$document->technician_id);$profileStatus=(clone $base)->where('status','approved')->exists()&&!(clone $base)->whereIn('status',['pending','rejected'])->exists()?'approved':$status;TechnicianProfile::where('user_id',$document->technician_id)->update(['kyc_status'=>$profileStatus,'verified_at'=>$profileStatus==='approved'?now():null]);Audit::record('kyc.reviewed',$document,['decision'=>$status]);return response()->json(['data'=>$document->fresh()]);}
+ private function admin(Request $r):void{abort_unless($r->user()->role->value==='admin',403);}
+}

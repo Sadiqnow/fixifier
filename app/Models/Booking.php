@@ -1,0 +1,4 @@
+<?php
+namespace App\Models;
+use App\Enums\BookingStatus; use Illuminate\Database\Eloquent\Model; use Illuminate\Database\Eloquent\Relations\{BelongsTo,HasMany,HasOne};
+class Booking extends Model { protected $fillable=['reference','customer_id','technician_id','service_category','description','address','scheduled_at','status']; protected function casts():array{return ['status'=>BookingStatus::class,'scheduled_at'=>'datetime'];} public function customer():BelongsTo{return $this->belongsTo(User::class,'customer_id');} public function technician():BelongsTo{return $this->belongsTo(User::class,'technician_id');} public function quotation():HasOne{return $this->hasOne(Quotation::class);} public function evidence():HasMany{return $this->hasMany(JobEvidence::class);} public function dispute():HasOne{return $this->hasOne(Dispute::class);} public function payment():HasOne{return $this->hasOne(Payment::class);} }

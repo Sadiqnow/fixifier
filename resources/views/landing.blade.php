@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Find verified professionals for home, office and industrial repairs with protected payments and job verification.">
+  <meta name="theme-color" content="#071f1c">
+  <title>Fixifier Plus — Trusted hands for every fix</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23071f1c'/%3E%3Cpath d='M18 16h30v9H28v8h16v9H28v10H18z' fill='%23f3b61f'/%3E%3C/svg%3E">
+  <style>
+    :root{--ink:#081f1c;--ink2:#123a34;--gold:#f3b61f;--cream:#f7f4eb;--white:#fff;--muted:#64736f;--line:#dbe3df;--shadow:0 24px 70px rgba(5,31,27,.14);--r:24px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--white);font:16px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}a{color:inherit;text-decoration:none}button,input{font:inherit}button{cursor:pointer}.wrap{width:min(1160px,calc(100% - 40px));margin:auto}.nav{height:78px;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:11px;font-weight:850;letter-spacing:-.04em;font-size:1.22rem}.mark{display:grid;place-items:center;width:39px;height:39px;border-radius:12px;background:var(--gold);color:var(--ink);font-weight:950}.links{display:flex;align-items:center;gap:28px;font-weight:650;font-size:.92rem}.links a:hover{color:#19705f}.actions{display:flex;gap:10px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:47px;padding:0 20px;border:1px solid transparent;border-radius:14px;background:var(--ink);color:#fff;font-weight:800;transition:.2s transform,.2s background}.btn:hover{transform:translateY(-2px);background:var(--ink2)}.btn.alt{background:transparent;color:var(--ink);border-color:var(--line)}.btn.gold{background:var(--gold);color:var(--ink)}.menu{display:none;border:0;background:transparent;font-size:1.5rem}.hero{position:relative;overflow:hidden;padding:76px 0 92px;background:linear-gradient(145deg,#f7f4eb 0%,#f9fbf8 55%,#e7f0eb 100%)}.hero:before{content:"";position:absolute;width:470px;height:470px;border-radius:50%;right:-140px;top:-200px;border:90px solid rgba(243,182,31,.18)}.hero-grid{position:relative;display:grid;grid-template-columns:1.08fr .92fr;gap:70px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;background:#e1ece6;border-radius:999px;color:#28594f;font-size:.78rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.eyebrow:before{content:"";width:8px;height:8px;border-radius:50%;background:#1e8c72}.hero h1{max-width:700px;margin:22px 0 18px;font-size:clamp(3.2rem,6.5vw,6.2rem);line-height:.93;letter-spacing:-.07em}.hero h1 span{color:#217462}.lede{max-width:650px;color:#536560;font-size:1.12rem}.search{display:flex;gap:8px;max-width:640px;margin-top:31px;padding:8px;background:#fff;border:1px solid #e4e8e5;border-radius:18px;box-shadow:0 14px 40px rgba(9,45,39,.09)}.search input{width:100%;border:0;outline:0;padding:0 14px;color:var(--ink);font-size:1rem}.search .btn{flex:none}.popular{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px;color:var(--muted);font-size:.86rem}.popular a{padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.65)}.visual{position:relative;min-height:470px}.job-card{position:absolute;inset:35px 20px 40px 50px;padding:29px;border-radius:32px;background:var(--ink);color:#fff;box-shadow:var(--shadow);transform:rotate(2deg)}.job-card:before{content:"";position:absolute;inset:11px;border:1px solid rgba(255,255,255,.12);border-radius:24px}.card-head,.person,.complete{position:relative}.card-head{display:flex;justify-content:space-between;align-items:center}.live{padding:6px 10px;border-radius:99px;background:rgba(34,197,146,.15);color:#76e8be;font-size:.76rem;font-weight:800}.person{display:flex;align-items:center;gap:15px;margin:50px 0 25px}.avatar{display:grid;place-items:center;width:64px;height:64px;border-radius:20px;background:var(--gold);color:var(--ink);font-size:1.2rem;font-weight:950}.stars{color:var(--gold)}.complete{padding:19px;border-radius:19px;background:rgba(255,255,255,.08)}.progress{height:7px;margin:13px 0;background:rgba(255,255,255,.12);border-radius:10px;overflow:hidden}.progress i{display:block;width:100%;height:100%;background:var(--gold)}.float{position:absolute;right:-5px;bottom:18px;padding:15px 17px;background:#fff;border-radius:16px;box-shadow:0 16px 44px rgba(8,31,28,.18);font-weight:850;transform:rotate(-3deg)}.trust{border-bottom:1px solid var(--line);background:#fff}.trust .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding-top:24px;padding-bottom:24px}.trust div{display:flex;align-items:center;justify-content:center;gap:9px;color:#4f625d;font-size:.9rem;font-weight:750}.tick{color:#16866d}.section{padding:100px 0}.section.soft{background:var(--cream)}.head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:34px}.kicker{color:#217462;font-size:.78rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.head h2{max-width:650px;margin:8px 0 0;font-size:clamp(2.25rem,4vw,4.1rem);line-height:1;letter-spacing:-.055em}.head p{max-width:450px;margin:0;color:var(--muted)}.services{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.service{min-height:270px;padding:25px;border:1px solid var(--line);border-radius:22px;background:#fff;transition:.2s transform,.2s box-shadow}.service:hover{transform:translateY(-6px);box-shadow:0 18px 45px rgba(8,31,28,.09)}.icon{display:grid;place-items:center;width:49px;height:49px;border-radius:14px;background:#e3efe9;font-size:1.25rem}.service h3{margin:48px 0 8px;font-size:1.23rem}.service p{color:var(--muted);font-size:.92rem}.service a{display:inline-block;margin-top:13px;font-weight:850}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.step{position:relative;padding:32px;border-top:3px solid var(--ink);background:#fff}.num{color:#aa8a31;font-size:2.7rem;font-weight:900;letter-spacing:-.06em}.step h3{font-size:1.25rem}.step p{color:var(--muted)}.safety{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}.safety-panel{padding:36px;border-radius:30px;background:var(--ink);color:#fff}.safety-row{display:flex;gap:14px;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.1)}.safety-row:last-child{border:0}.safety-copy h2{font-size:clamp(2.4rem,4vw,4.2rem);line-height:1;letter-spacing:-.055em}.safety-copy p{color:var(--muted)}.cta{padding:90px 0;background:var(--gold)}.cta .wrap{display:flex;justify-content:space-between;align-items:center;gap:30px}.cta h2{max-width:700px;margin:0;font-size:clamp(2.4rem,5vw,5rem);line-height:.95;letter-spacing:-.06em}.cta .btn{background:var(--ink);white-space:nowrap}.faq{max-width:850px}.faq details{padding:19px 0;border-bottom:1px solid var(--line)}.faq summary{cursor:pointer;font-size:1.08rem;font-weight:820}.faq p{color:var(--muted)}footer{padding:55px 0 24px;background:#061714;color:#dce8e4}.foot{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:38px}.foot h4{color:#fff}.foot a{display:block;margin:8px 0;color:#a9bbb5}.legal{display:flex;justify-content:space-between;gap:20px;margin-top:45px;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);color:#8fa39d;font-size:.86rem}.toast{position:fixed;left:50%;bottom:25px;z-index:20;transform:translate(-50%,120px);padding:13px 17px;border-radius:12px;background:var(--ink);color:#fff;box-shadow:var(--shadow);transition:.25s}.toast.show{transform:translate(-50%,0)}
+    @media(max-width:900px){.links{display:none}.actions .alt{display:none}.menu{display:block}.hero-grid,.safety{grid-template-columns:1fr}.hero{padding-top:55px}.visual{min-height:410px}.job-card{inset:20px 18px 30px 18px}.services{grid-template-columns:repeat(2,1fr)}.trust .wrap{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:1fr}.foot{grid-template-columns:1fr 1fr}.cta .wrap{display:block}.cta .btn{margin-top:28px}.mobile-links{display:flex!important}}
+    @media(max-width:560px){.wrap{width:min(100% - 24px,1160px)}.nav{height:68px}.actions .btn{display:none}.hero h1{font-size:3.25rem}.search{display:block}.search .btn{width:100%;margin-top:8px}.visual{min-height:370px}.job-card{padding:23px}.float{right:0}.services,.trust .wrap,.foot{grid-template-columns:1fr}.trust div{justify-content:flex-start}.section{padding:75px 0}.head{display:block}.head p{margin-top:16px}.legal{display:block}.legal span{display:block;margin-top:8px}}
+    .mobile-panel{display:none;padding:10px 20px 22px;border-top:1px solid var(--line);background:#fff}.mobile-panel a{padding:10px 0;font-weight:750}
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <nav class="nav" aria-label="Main navigation">
+      <a class="brand" href="#top"><span class="mark">F+</span>Fixifier Plus</a>
+      <div class="links"><a href="#services">Services</a><a href="#how">How it works</a><a href="#safety">Safety</a><a href="#faq">Help</a></div>
+      <div class="actions"><a class="btn alt" href="{{ route('login') }}">Log in</a><a class="btn" href="{{ route('booking.create') }}">Book a service</a><button class="menu" id="menu" aria-label="Open menu" aria-expanded="false">☰</button></div>
+    </nav>
+  </header>
+  <div class="mobile-panel" id="mobile"><a href="#services">Services</a><a href="#how">How it works</a><a href="#safety">Safety</a><a href="#faq">Help</a><a href="{{ route('login') }}">Log in</a></div>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">Verified local professionals</div>
+          <h1>Every repair.<br><span>One trusted place.</span></h1>
+          <p class="lede">Book skilled technicians for your home, office or industrial facility—with verified profiles, clear job records and protected payments.</p>
+          <form class="search" id="searchForm"><label for="job" hidden>What do you need fixed?</label><input id="job" placeholder="What do you need fixed?" autocomplete="off"><button class="btn gold" type="submit">Find a technician →</button></form>
+          <div class="popular"><span>Popular:</span><a href="#services">Plumbing</a><a href="#services">Electrical</a><a href="#services">AC repair</a></div>
+        </div>
+        <div class="visual" aria-label="Example verified technician job">
+          <div class="job-card">
+            <div class="card-head"><strong>Active repair</strong><span class="live">● VERIFIED</span></div>
+            <div class="person"><div class="avatar">MK</div><div><strong>Musa K.</strong><br><small>Electrical Technician</small><br><span class="stars">★★★★★</span> <small>4.9 · 126 jobs</small></div></div>
+            <div class="complete"><small>JOB STATUS</small><div class="progress"><i></i></div><strong>Work completed</strong><br><small>Waiting for customer approval</small></div>
+          </div>
+          <div class="float">✓ Payment protected</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="trust"><div class="wrap"><div><span class="tick">✓</span> Identity verified</div><div><span class="tick">✓</span> Skills reviewed</div><div><span class="tick">✓</span> Payments protected</div><div><span class="tick">✓</span> Work approved by you</div></div></div>
+
+    <section class="section" id="services">
+      <div class="wrap">
+        <div class="head"><div><div class="kicker">What we fix</div><h2>Reliable help for every space.</h2></div><p>From urgent home repairs to planned industrial maintenance, choose the service you need and connect with the right professional.</p></div>
+        <div class="services">
+          <article class="service"><div class="icon">⚡</div><h3>Electrical</h3><p>Wiring, faults, installations, inverters and power systems.</p><a href="{{ route('booking.create') }}?service=electrical">Book service →</a></article>
+          <article class="service"><div class="icon">◉</div><h3>Plumbing</h3><p>Leaks, fittings, pumps, drainage and water systems.</p><a href="{{ route('booking.create') }}?service=plumbing">Book service →</a></article>
+          <article class="service"><div class="icon">❄</div><h3>AC & Cooling</h3><p>Installation, servicing, diagnosis and cooling repairs.</p><a href="{{ route('booking.create') }}?service=ac">Book service →</a></article>
+          <article class="service"><div class="icon">⚙</div><h3>Industrial</h3><p>Equipment, machinery and facility maintenance.</p><a href="{{ route('booking.create') }}?service=industrial">Book service →</a></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section soft" id="how">
+      <div class="wrap"><div class="head"><div><div class="kicker">Simple by design</div><h2>From problem to solved.</h2></div><p>Keep every stage visible, from the first request to final approval.</p></div>
+        <div class="steps"><article class="step"><div class="num">01</div><h3>Describe the job</h3><p>Choose a service, explain the problem and set your preferred location and time.</p></article><article class="step"><div class="num">02</div><h3>Choose your expert</h3><p>Review verified profiles, experience, ratings and quotations before deciding.</p></article><article class="step"><div class="num">03</div><h3>Approve completed work</h3><p>Review job evidence and approve the result before protected payment is released.</p></article></div>
+      </div>
+    </section>
+
+    <section class="section" id="safety"><div class="wrap safety"><div class="safety-copy"><div class="kicker">The Fixifier standard</div><h2>Trust is built into every job.</h2><p>Verification, transparent job records and controlled payment release help customers and technicians work with confidence.</p><a class="btn" href="{{ route('booking.create') }}">Book with confidence →</a></div><div class="safety-panel"><div class="safety-row"><span>✓</span><div><strong>Technician verification</strong><br><small>Identity, profile and professional information checks.</small></div></div><div class="safety-row"><span>✓</span><div><strong>Before-and-after evidence</strong><br><small>Visual job records make completion easier to verify.</small></div></div><div class="safety-row"><span>✓</span><div><strong>Protected transactions</strong><br><small>Payment remains protected until the job is approved.</small></div></div><div class="safety-row"><span>✓</span><div><strong>Support and disputes</strong><br><small>A documented process when a job needs review.</small></div></div></div></div></section>
+
+    <section class="section soft" id="faq"><div class="wrap faq"><div class="kicker">Frequently asked questions</div><div class="head"><h2>Know before you book.</h2></div><details><summary>How are technicians verified?</summary><p>Technicians submit identity and professional information for review. Verification status is shown on their profile.</p></details><details><summary>When is my payment released?</summary><p>Protected payment is released after the job is completed and the customer approves the work, subject to the platform's terms.</p></details><details><summary>Can businesses use Fixifier Plus?</summary><p>Yes. Offices, estates, facilities and industrial operators can request repairs and maintenance from qualified providers.</p></details><details><summary>How can I join as a technician?</summary><p>Create a technician account, complete your professional profile and submit the required verification information.</p></details></div></section>
+
+    <section class="cta"><div class="wrap"><h2>Need something fixed? Start here.</h2><div><a class="btn" href="{{ route('booking.create') }}">Book a service →</a> <a class="btn alt" href="{{ route('technician.register') }}">Join as a technician</a></div></div></section>
+  </main>
+
+  <footer><div class="wrap"><div class="foot"><div><a class="brand" href="#top"><span class="mark">F+</span>Fixifier Plus</a><p>Trusted hands for every fix.</p></div><div><h4>Platform</h4><a href="#services">Services</a><a href="#how">How it works</a><a href="#safety">Safety</a></div><div><h4>Professionals</h4><a href="{{ route('technician.register') }}">Become a technician</a><a href="{{ route('technician.login') }}">Technician login</a></div><div><h4>Support</h4><a href="#faq">Help centre</a><a href="mailto:support@fixifier.com">Contact us</a></div></div><div class="legal"><span>© <span id="year"></span> Fixifier Plus. All rights reserved.</span><span><a href="{{ url('/privacy') }}">Privacy</a> · <a href="{{ url('/terms') }}">Terms</a></span></div></div></footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    const API_BASE=@json(url('/api/v1'));
+    const menu=document.getElementById('menu'),mobile=document.getElementById('mobile'),toast=document.getElementById('toast');
+    menu.addEventListener('click',()=>{const open=mobile.classList.toggle('mobile-links');menu.setAttribute('aria-expanded',String(open));menu.textContent=open?'×':'☰'});
+    mobile.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{mobile.classList.remove('mobile-links');menu.textContent='☰';menu.setAttribute('aria-expanded','false')}));
+    document.getElementById('searchForm').addEventListener('submit',e=>{e.preventDefault();const q=document.getElementById('job').value.trim();if(!q){show('Tell us what you need fixed');return}location.href=@json(route('booking.create'))+'?service='+encodeURIComponent(q)});
+    function show(message){toast.textContent=message;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2600)}
+    document.getElementById('year').textContent=new Date().getFullYear();
+    window.FIXIFIER={apiBase:API_BASE};
+  </script>
+</body>
+</html>

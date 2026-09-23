@@ -1,0 +1,14 @@
+openapi: 3.1.0
+info: {title: Fixifier Plus API, version: 1.0.0}
+servers: [{url: /api/v1}]
+paths:
+  /auth/register: {post: {summary: Register customer or technician, responses: {'201': {description: Created}, '422': {description: Validation error}}}}
+  /auth/login: {post: {summary: Create Sanctum token, responses: {'200': {description: Authenticated}, '422': {description: Invalid credentials}}}}
+  /bookings: {get: {summary: List role-scoped bookings, security: [{bearerAuth: []}], responses: {'200': {description: Paginated bookings}}}, post: {summary: Request a service, security: [{bearerAuth: []}], responses: {'201': {description: Booking created}}}}
+  /bookings/{id}/quotation: {post: {summary: Technician submits quotation, security: [{bearerAuth: []}], parameters: [{$ref: '#/components/parameters/id'}], responses: {'201': {description: Quotation created}}}}
+  /bookings/{id}/quotation/accept: {post: {summary: Customer accepts quotation, security: [{bearerAuth: []}], parameters: [{$ref: '#/components/parameters/id'}], responses: {'200': {description: Confirmed}}}}
+  /bookings/{id}/evidence: {post: {summary: Upload before or after evidence, security: [{bearerAuth: []}], parameters: [{$ref: '#/components/parameters/id'}], responses: {'201': {description: Evidence stored}}}}
+  /bookings/{id}/approve: {post: {summary: Customer approves work and releases payment, security: [{bearerAuth: []}], parameters: [{$ref: '#/components/parameters/id'}], responses: {'200': {description: Completed}}}}
+components:
+  securitySchemes: {bearerAuth: {type: http, scheme: bearer}}
+  parameters: {id: {name: id, in: path, required: true, schema: {type: integer}}}

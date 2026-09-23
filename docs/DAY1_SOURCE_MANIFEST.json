@@ -1,0 +1,178 @@
+﻿[
+    {
+        "Path":  "app\\Enums\\BookingStatus.php",
+        "SHA256":  "8CCDACCEFD0663D85DFD8CCD2E0650094C9410CC008909A055E852BDF1827B2D"
+    },
+    {
+        "Path":  "app\\Enums\\UserRole.php",
+        "SHA256":  "D87EE4E59EB37306575B08A4700D80FB763D4C421333F65C6069A36213C23441"
+    },
+    {
+        "Path":  "app\\Http\\Controllers\\Controller.php",
+        "SHA256":  "50C69A51484453A057E0349262B108515DF469C70404C01816BF8A26C8B16756"
+    },
+    {
+        "Path":  "app\\Http\\Controllers\\Api\\V1\\AdminPortalController.php",
+        "SHA256":  "C67EE82FE12F5639C8A5187BDE4F2F4D9C51BF210B815FA98ACDFB6FCF6807A0"
+    },
+    {
+        "Path":  "app\\Http\\Controllers\\Api\\V1\\AuthController.php",
+        "SHA256":  "B02C439D1169F2C23A3825C7C94B2D9838AF7D41BC73857DE5D546DAEB1DC2B7"
+    },
+    {
+        "Path":  "app\\Http\\Controllers\\Api\\V1\\BookingController.php",
+        "SHA256":  "DFCD12D1DD64094D8F37A484D6BDCE045E38DA4A66D65FBC2330FE76466B6D7E"
+    },
+    {
+        "Path":  "app\\Http\\Controllers\\Api\\V1\\PortalController.php",
+        "SHA256":  "56D14BF7E2BFF663A2F7063BE1FBDE62E40893C543D3063C3F391E40F8802914"
+    },
+    {
+        "Path":  "app\\Http\\Controllers\\Api\\V1\\WorkflowController.php",
+        "SHA256":  "814EAB84BA00CF9892292576340900D5F5EBD857D5C17B7BB3CF59727BDA0B01"
+    },
+    {
+        "Path":  "app\\Http\\Requests\\CreateBookingRequest.php",
+        "SHA256":  "08D09809FF3AEE6E4D38E0FA7E3176C146D1E942B0B28D1A4CA77BF52018C60C"
+    },
+    {
+        "Path":  "app\\Http\\Requests\\SubmitQuotationRequest.php",
+        "SHA256":  "C38C104E5F0D7C865BCA9FECC11BB9AE3C8EAFDD2ACA0802420E6602C7389579"
+    },
+    {
+        "Path":  "app\\Models\\AuditEvent.php",
+        "SHA256":  "FC9F3158F227029E6FABF7B58C178FBB225BA53BA17B42BD5EFFB7642D54AF1A"
+    },
+    {
+        "Path":  "app\\Models\\Booking.php",
+        "SHA256":  "B07206B2FD6DCB2E7C280B68A5ABCC80ABCA3EA0D21EB3458CBE4FA2224F9F17"
+    },
+    {
+        "Path":  "app\\Models\\Dispute.php",
+        "SHA256":  "7872542C7F50ED17CF3D7C71D10984F4EEDD961E26973A16541DF9889A81D249"
+    },
+    {
+        "Path":  "app\\Models\\JobEvidence.php",
+        "SHA256":  "4A161486219ADE36391BC49453EF3629450C0DEF657C30D83F8E9CD55B7B1E3C"
+    },
+    {
+        "Path":  "app\\Models\\Payment.php",
+        "SHA256":  "251A3A84D6502D2B5450A4888388DE4820611B0F015B16EA1AF89CDFB285C616"
+    },
+    {
+        "Path":  "app\\Models\\Quotation.php",
+        "SHA256":  "216664A62308B89E07A2BE8F3CED6E4FCAE41B7BC32D7284D054F5F1F740AABB"
+    },
+    {
+        "Path":  "app\\Models\\User.php",
+        "SHA256":  "E708D8B9881A9E512B396ECB25B4EE216AC81E8622CA4F04F4C0E492BD3F2065"
+    },
+    {
+        "Path":  "app\\Providers\\AppServiceProvider.php",
+        "SHA256":  "CAF306EF6A25A547BBB7EDD5508A39B51C365083EB6DD58378CF2242018E94C7"
+    },
+    {
+        "Path":  "app\\Services\\Audit.php",
+        "SHA256":  "D352E25E0BB1A345F9DC9E45826A8628705EB8282219455BC7D032D068E1076E"
+    },
+    {
+        "Path":  "routes\\api.php",
+        "SHA256":  "FD41248D67501DBB49F9B91BCDF044C260A0925381E3BDCDAE8B34F3A8C91A6A"
+    },
+    {
+        "Path":  "routes\\console.php",
+        "SHA256":  "00ABA3928CD622AD67C0F81ECD5AA8699E07F8F4908C045FE34F6A2DC0067B37"
+    },
+    {
+        "Path":  "routes\\web.php",
+        "SHA256":  "4EF1A97E97A06A0A6B28CBC06933837EB6CDB2EF830C58665C0005D66C0C977E"
+    },
+    {
+        "Path":  "database\\migrations\\0001_01_01_000000_create_users_table.disabled",
+        "SHA256":  "10D79883BC08CE46510F9AD8B1830B4D06D586DC56AE2C8BAC3B3E491F69A90F"
+    },
+    {
+        "Path":  "database\\migrations\\0001_01_01_000001_create_cache_table.php",
+        "SHA256":  "2CA8398390ECEF8EAF72AEAC7FEFCE67F7DE631B6F2EC7B7081C8DB8953215DC"
+    },
+    {
+        "Path":  "database\\migrations\\0001_01_01_000002_create_jobs_table.php",
+        "SHA256":  "7C9C712ADF4091C87BF2612F4D0DCCDFA1DF4501553E4AC068B83D7BD5462FA5"
+    },
+    {
+        "Path":  "database\\migrations\\2026_09_22_000001_create_fixifier_core_tables.php",
+        "SHA256":  "0B5412F034B9DDE7F2FE70E4010CF50A39EE57B10C1682ADAAFAAEA1B226A403"
+    },
+    {
+        "Path":  "database\\migrations\\2026_09_22_072821_create_personal_access_tokens_table.php",
+        "SHA256":  "C81ECDE85EA5072188C468DCAF79776728B6EB8F684D63FC0D88A4908484CA75"
+    },
+    {
+        "Path":  "database\\migrations\\2026_09_23_000001_add_technician_service_details.php",
+        "SHA256":  "9ABAB90901F601B615294A9147582045B5E489CF7755E7EE8E4DD3D17AFF98EF"
+    },
+    {
+        "Path":  "resources\\views\\admin.blade.php",
+        "SHA256":  "F6F82265A0E13349D3077D5F76146077D0FB1CAE76085188CB69C24CC2FA8860"
+    },
+    {
+        "Path":  "resources\\views\\job-verification.blade.php",
+        "SHA256":  "06BBA350ADBB18E674DFA4C32C711419F8C21626B6D24E34631986C09464811E"
+    },
+    {
+        "Path":  "resources\\views\\landing.blade.php",
+        "SHA256":  "A1C12DC6AC29C73B1DC15186B853685E43C66B0CAACE7263C6D6516FA4606567"
+    },
+    {
+        "Path":  "resources\\views\\marketplace.blade.php",
+        "SHA256":  "A5DA1EAF2E73ED96878290E1D91C43C79C2C75681A92C1C1544879515778D693"
+    },
+    {
+        "Path":  "resources\\views\\technician.blade.php",
+        "SHA256":  "95AE79FAEF3C38000CE98A29BB5F9058BBB5E63A659528623E5B14D7B942D30E"
+    },
+    {
+        "Path":  "resources\\views\\welcome.blade.php",
+        "SHA256":  "E50E41602994840B788471625FEC54A4DB6138EC971BE05CFDFBA40DAF906C22"
+    },
+    {
+        "Path":  "public\\js\\admin.js",
+        "SHA256":  "61E68038F2E2672AAF68F104D89018F4B29E1358B2F3264CC5FB081B41497C9D"
+    },
+    {
+        "Path":  "public\\js\\marketplace.js",
+        "SHA256":  "90FD03BECC21E86CD3F44B1B5478CBE795579596FF5D55FDC799EF44290C10B5"
+    },
+    {
+        "Path":  "public\\js\\technician.js",
+        "SHA256":  "F8F56C8FC0D4C8D52EB9DD5AE6AB0EC20C04364407279594F6332C6BD72FCE1D"
+    },
+    {
+        "Path":  "tests\\TestCase.php",
+        "SHA256":  "C7C209F5579C42647C1F7B2A79AC828E8B54AC62A98442045A6E94FA2C0D0EBC"
+    },
+    {
+        "Path":  "tests\\Feature\\BookingIsolationTest.php",
+        "SHA256":  "F5B75D4E8B20FB49253908BF70F4583C76014CB61FC2ED11AD82D52F34CD7291"
+    },
+    {
+        "Path":  "tests\\Feature\\DemoSeederTest.php",
+        "SHA256":  "BD8BDABC5532DDBFFA602570AB1D4F5B0CF98B545F5F3E9FE1DF8B80B85443B3"
+    },
+    {
+        "Path":  "tests\\Feature\\ExampleTest.php",
+        "SHA256":  "AAA4A192FB4AA96D4E81EDA06A29968DA3D9A73B71026B87A67297E66DD985B8"
+    },
+    {
+        "Path":  "tests\\Feature\\MarketplaceTest.php",
+        "SHA256":  "6437264C4755034D36F8E635AB914735F37FD1C59F9B07A8D83A69E427B9736D"
+    },
+    {
+        "Path":  "tests\\Feature\\WorkflowContractTest.php",
+        "SHA256":  "052FE33D2A1BE66120FCB3A7D6607DDCA4ADE2DCE0314FD9FCDEFFDE028CAD48"
+    },
+    {
+        "Path":  "tests\\Unit\\ExampleTest.php",
+        "SHA256":  "FFACAE5C1A2A44C809420AF5B3B404910DA1B12167D58764DAC6D10B8BA8CFAF"
+    }
+]
