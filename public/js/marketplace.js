@@ -43,6 +43,12 @@
     }
     async function enter() {
         user = (await api('/me')).data;
+        const verificationBooking = query.get('verification_booking');
+        if (query.get('verification') === '1' || (verificationBooking && /^[1-9]\d*$/.test(verificationBooking))) {
+            const destination = new URL($('meta[name="verification-url"]').content);
+            if (verificationBooking && /^[1-9]\d*$/.test(verificationBooking)) destination.searchParams.set('booking', verificationBooking);
+            location.replace(destination.href); return;
+        }
         if (user.role === 'admin') { location.replace($('meta[name="admin-url"]').content); return; }
         if (user.role === 'technician') { location.replace($('meta[name="technician-url"]').content); return; }
         $('#rolePill').textContent = `${label(user.role)} portal`;
@@ -92,6 +98,7 @@
     }
     function card(job) {
         let buttons = action('View details','details',job.id);
+        buttons += `<a class="btn secondary small" href="${escape($('meta[name="verification-url"]').content)}?booking=${job.id}">Job verification</a>`;
         if (user.role === 'customer' && job.status === 'quoted') buttons += action('Accept quotation','accept',job.id);
         if (user.role === 'technician' && job.status === 'requested') buttons += action('Send quotation','quote',job.id);
         if (user.role === 'technician' && job.status === 'confirmed') buttons += action('Start job','start',job.id);

@@ -32,6 +32,7 @@ async function load() { const result=await api(`/bookings?page=${page}`); jobs=r
 function button(title,action,id) { return `<button class="btn secondary" data-action="${action}" data-id="${id}">${title}</button>`; }
 function card(job) {
     let actions=button('Details / evidence','details',job.id);
+    actions+=`<a class="btn secondary" href="${esc(document.querySelector('meta[name="verification-url"]').content)}?booking=${job.id}">Job verification</a>`;
     if(job.status==='requested') actions+=button('Send quotation','quote',job.id);
     if(job.status==='confirmed') actions+=button('Start job','start',job.id);
     if(job.status==='in_progress') actions+=button('Upload evidence','upload',job.id)+button('Submit for approval','submit',job.id);

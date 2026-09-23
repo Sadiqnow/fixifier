@@ -1,0 +1,231 @@
+QUERY: SELECT VERSION() AS server_version,DATABASE() AS database_name,@@sql_mode AS sql_mode,@@explicit_defaults_for_timestamp AS explicit_timestamp_defaults
+server_version	database_name	sql_mode	explicit_timestamp_defaults
+10.4.32-MariaDB	mtechedg_fixifier	NO_ZERO_IN_DATE,NO_ZERO_DATE,NO_ENGINE_SUBSTITUTION	0
+QUERY: SELECT TABLE_NAME,ENGINE,TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()
+TABLE_NAME	ENGINE	TABLE_COLLATION
+audit_events	InnoDB	utf8mb4_unicode_ci
+bookings	InnoDB	utf8mb4_unicode_ci
+cache	InnoDB	utf8mb4_unicode_ci
+cache_locks	InnoDB	utf8mb4_unicode_ci
+disputes	InnoDB	utf8mb4_unicode_ci
+failed_jobs	InnoDB	utf8mb4_unicode_ci
+jobs	InnoDB	utf8mb4_unicode_ci
+job_batches	InnoDB	utf8mb4_unicode_ci
+job_evidence	InnoDB	utf8mb4_unicode_ci
+migrations	InnoDB	utf8mb4_unicode_ci
+payments	InnoDB	utf8mb4_unicode_ci
+personal_access_tokens	InnoDB	utf8mb4_unicode_ci
+quotations	InnoDB	utf8mb4_unicode_ci
+technician_profiles	InnoDB	utf8mb4_unicode_ci
+users	InnoDB	utf8mb4_unicode_ci
+QUERY: SELECT TABLE_NAME,COLUMN_NAME,COLUMN_TYPE,IS_NULLABLE,COLUMN_DEFAULT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() ORDER BY TABLE_NAME,ORDINAL_POSITION
+TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_DEFAULT
+audit_events	id	bigint(20) unsigned	NO	NULL
+audit_events	actor_id	bigint(20) unsigned	YES	NULL
+audit_events	action	varchar(255)	NO	NULL
+audit_events	subject_type	varchar(255)	NO	NULL
+audit_events	subject_id	bigint(20) unsigned	NO	NULL
+audit_events	metadata	longtext	YES	NULL
+audit_events	ip_address	varchar(45)	YES	NULL
+audit_events	created_at	timestamp	NO	current_timestamp()
+bookings	id	bigint(20) unsigned	NO	NULL
+bookings	reference	varchar(255)	NO	NULL
+bookings	customer_id	bigint(20) unsigned	NO	NULL
+bookings	technician_id	bigint(20) unsigned	YES	NULL
+bookings	service_category	varchar(255)	NO	NULL
+bookings	description	text	NO	NULL
+bookings	address	text	NO	NULL
+bookings	scheduled_at	timestamp	YES	NULL
+bookings	status	varchar(32)	NO	'requested'
+bookings	created_at	timestamp	YES	NULL
+bookings	updated_at	timestamp	YES	NULL
+cache	key	varchar(255)	NO	NULL
+cache	value	mediumtext	NO	NULL
+cache	expiration	int(11)	NO	NULL
+cache_locks	key	varchar(255)	NO	NULL
+cache_locks	owner	varchar(255)	NO	NULL
+cache_locks	expiration	int(11)	NO	NULL
+disputes	id	bigint(20) unsigned	NO	NULL
+disputes	booking_id	bigint(20) unsigned	NO	NULL
+disputes	opened_by	bigint(20) unsigned	NO	NULL
+disputes	reason	varchar(255)	NO	NULL
+disputes	details	text	NO	NULL
+disputes	status	varchar(24)	NO	'open'
+disputes	resolution	text	YES	NULL
+disputes	resolved_by	bigint(20) unsigned	YES	NULL
+disputes	resolved_at	timestamp	YES	NULL
+disputes	created_at	timestamp	YES	NULL
+disputes	updated_at	timestamp	YES	NULL
+failed_jobs	id	bigint(20) unsigned	NO	NULL
+failed_jobs	uuid	varchar(255)	NO	NULL
+failed_jobs	connection	text	NO	NULL
+failed_jobs	queue	text	NO	NULL
+failed_jobs	payload	longtext	NO	NULL
+failed_jobs	exception	longtext	NO	NULL
+failed_jobs	failed_at	timestamp	NO	current_timestamp()
+jobs	id	bigint(20) unsigned	NO	NULL
+jobs	queue	varchar(255)	NO	NULL
+jobs	payload	longtext	NO	NULL
+jobs	attempts	tinyint(3) unsigned	NO	NULL
+jobs	reserved_at	int(10) unsigned	YES	NULL
+jobs	available_at	int(10) unsigned	NO	NULL
+jobs	created_at	int(10) unsigned	NO	NULL
+job_batches	id	varchar(255)	NO	NULL
+job_batches	name	varchar(255)	NO	NULL
+job_batches	total_jobs	int(11)	NO	NULL
+job_batches	pending_jobs	int(11)	NO	NULL
+job_batches	failed_jobs	int(11)	NO	NULL
+job_batches	failed_job_ids	longtext	NO	NULL
+job_batches	options	mediumtext	YES	NULL
+job_batches	cancelled_at	int(11)	YES	NULL
+job_batches	created_at	int(11)	NO	NULL
+job_batches	finished_at	int(11)	YES	NULL
+job_evidence	id	bigint(20) unsigned	NO	NULL
+job_evidence	booking_id	bigint(20) unsigned	NO	NULL
+job_evidence	technician_id	bigint(20) unsigned	NO	NULL
+job_evidence	type	varchar(12)	NO	NULL
+job_evidence	storage_path	text	NO	NULL
+job_evidence	mime_type	varchar(100)	NO	NULL
+job_evidence	size_bytes	bigint(20) unsigned	NO	NULL
+job_evidence	sha256	char(64)	NO	NULL
+job_evidence	note	text	YES	NULL
+job_evidence	captured_at	timestamp	NO	current_timestamp()
+job_evidence	created_at	timestamp	YES	NULL
+job_evidence	updated_at	timestamp	YES	NULL
+migrations	id	int(10) unsigned	NO	NULL
+migrations	migration	varchar(255)	NO	NULL
+migrations	batch	int(11)	NO	NULL
+payments	id	bigint(20) unsigned	NO	NULL
+payments	booking_id	bigint(20) unsigned	NO	NULL
+payments	provider	varchar(255)	NO	NULL
+payments	provider_reference	varchar(255)	NO	NULL
+payments	amount_minor	bigint(20) unsigned	NO	NULL
+payments	currency	char(3)	NO	'NGN'
+payments	status	varchar(24)	NO	NULL
+payments	authorized_at	timestamp	YES	NULL
+payments	released_at	timestamp	YES	NULL
+payments	refunded_at	timestamp	YES	NULL
+payments	created_at	timestamp	YES	NULL
+payments	updated_at	timestamp	YES	NULL
+personal_access_tokens	id	bigint(20) unsigned	NO	NULL
+personal_access_tokens	tokenable_type	varchar(255)	NO	NULL
+personal_access_tokens	tokenable_id	bigint(20) unsigned	NO	NULL
+personal_access_tokens	name	text	NO	NULL
+personal_access_tokens	token	varchar(64)	NO	NULL
+personal_access_tokens	abilities	text	YES	NULL
+personal_access_tokens	last_used_at	timestamp	YES	NULL
+personal_access_tokens	expires_at	timestamp	YES	NULL
+personal_access_tokens	created_at	timestamp	YES	NULL
+personal_access_tokens	updated_at	timestamp	YES	NULL
+quotations	id	bigint(20) unsigned	NO	NULL
+quotations	booking_id	bigint(20) unsigned	NO	NULL
+quotations	amount_minor	bigint(20) unsigned	NO	NULL
+quotations	currency	char(3)	NO	'NGN'
+quotations	scope	text	NO	NULL
+quotations	expires_at	timestamp	NO	current_timestamp()
+quotations	accepted_at	timestamp	YES	NULL
+quotations	created_at	timestamp	YES	NULL
+quotations	updated_at	timestamp	YES	NULL
+technician_profiles	id	bigint(20) unsigned	NO	NULL
+technician_profiles	user_id	bigint(20) unsigned	NO	NULL
+technician_profiles	trade	varchar(255)	NO	NULL
+technician_profiles	bio	text	YES	NULL
+technician_profiles	years_experience	smallint(5) unsigned	NO	0
+technician_profiles	kyc_status	varchar(24)	NO	'pending'
+technician_profiles	verified_at	timestamp	YES	NULL
+technician_profiles	created_at	timestamp	YES	NULL
+technician_profiles	updated_at	timestamp	YES	NULL
+technician_profiles	service_location	varchar(100)	YES	NULL
+technician_profiles	starting_price_minor	bigint(20) unsigned	YES	NULL
+users	id	bigint(20) unsigned	NO	NULL
+users	name	varchar(255)	NO	NULL
+users	email	varchar(255)	NO	NULL
+users	phone	varchar(255)	YES	NULL
+users	password	varchar(255)	NO	NULL
+users	role	varchar(24)	NO	NULL
+users	email_verified_at	timestamp	YES	NULL
+users	remember_token	varchar(100)	YES	NULL
+users	created_at	timestamp	YES	NULL
+users	updated_at	timestamp	YES	NULL
+QUERY: SELECT TABLE_NAME,INDEX_NAME,NON_UNIQUE,GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX) AS columns_list FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() GROUP BY TABLE_NAME,INDEX_NAME,NON_UNIQUE
+TABLE_NAME	INDEX_NAME	NON_UNIQUE	columns_list
+audit_events	audit_events_action_index	1	action
+audit_events	audit_events_actor_id_foreign	1	actor_id
+audit_events	audit_events_subject_type_subject_id_index	1	subject_type,subject_id
+audit_events	PRIMARY	0	id
+bookings	bookings_customer_id_status_index	1	customer_id,status
+bookings	bookings_service_category_index	1	service_category
+bookings	bookings_status_index	1	status
+bookings	bookings_technician_id_status_index	1	technician_id,status
+bookings	PRIMARY	0	id
+bookings	reference	0	reference
+cache	cache_expiration_index	1	expiration
+cache	PRIMARY	0	key
+cache_locks	cache_locks_expiration_index	1	expiration
+cache_locks	PRIMARY	0	key
+disputes	booking_id	0	booking_id
+disputes	disputes_opened_by_foreign	1	opened_by
+disputes	disputes_resolved_by_foreign	1	resolved_by
+disputes	disputes_status_index	1	status
+disputes	PRIMARY	0	id
+failed_jobs	failed_jobs_uuid_unique	0	uuid
+failed_jobs	PRIMARY	0	id
+jobs	jobs_queue_index	1	queue
+jobs	PRIMARY	0	id
+job_batches	PRIMARY	0	id
+job_evidence	job_evidence_booking_id_type_index	1	booking_id,type
+job_evidence	job_evidence_technician_id_foreign	1	technician_id
+job_evidence	PRIMARY	0	id
+migrations	PRIMARY	0	id
+payments	booking_id	0	booking_id
+payments	payments_status_index	1	status
+payments	PRIMARY	0	id
+payments	provider_reference	0	provider_reference
+personal_access_tokens	personal_access_tokens_expires_at_index	1	expires_at
+personal_access_tokens	personal_access_tokens_tokenable_type_tokenable_id_index	1	tokenable_type,tokenable_id
+personal_access_tokens	PRIMARY	0	id
+personal_access_tokens	token	0	token
+quotations	booking_id	0	booking_id
+quotations	PRIMARY	0	id
+technician_profiles	PRIMARY	0	id
+technician_profiles	technician_profiles_kyc_status_index	1	kyc_status
+technician_profiles	user_id	0	user_id
+users	email	0	email
+users	phone	0	phone
+users	PRIMARY	0	id
+users	users_role_index	1	role
+QUERY: SELECT TABLE_NAME,COLUMN_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME,REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL
+TABLE_NAME	COLUMN_NAME	CONSTRAINT_NAME	REFERENCED_TABLE_NAME	REFERENCED_COLUMN_NAME
+audit_events	actor_id	audit_events_actor_id_foreign	users	id
+bookings	customer_id	bookings_customer_id_foreign	users	id
+bookings	technician_id	bookings_technician_id_foreign	users	id
+disputes	booking_id	disputes_booking_id_foreign	bookings	id
+disputes	opened_by	disputes_opened_by_foreign	users	id
+disputes	resolved_by	disputes_resolved_by_foreign	users	id
+job_evidence	booking_id	job_evidence_booking_id_foreign	bookings	id
+job_evidence	technician_id	job_evidence_technician_id_foreign	users	id
+payments	booking_id	payments_booking_id_foreign	bookings	id
+quotations	booking_id	quotations_booking_id_foreign	bookings	id
+technician_profiles	user_id	technician_profiles_user_id_foreign	users	id
+QUERY: SELECT migration,batch FROM migrations ORDER BY id
+migration	batch
+2026_09_22_000001_create_fixifier_core_tables	1
+2026_09_22_072821_create_personal_access_tokens_table	1
+0001_01_01_000001_create_cache_table	2
+0001_01_01_000002_create_jobs_table	2
+2026_09_23_000001_add_technician_service_details	3
+QUERY: SELECT 'bookings' AS source,status,COUNT(*) AS records FROM bookings GROUP BY status UNION ALL SELECT 'disputes',status,COUNT(*) FROM disputes GROUP BY status UNION ALL SELECT 'payments',status,COUNT(*) FROM payments GROUP BY status UNION ALL SELECT 'kyc',kyc_status,COUNT(*) FROM technician_profiles GROUP BY kyc_status
+source	status	records
+bookings	cancelled	5
+bookings	completed	6
+bookings	confirmed	5
+bookings	disputed	5
+bookings	evidence_submitted	6
+bookings	in_progress	5
+bookings	quoted	6
+bookings	requested	6
+disputes	open	5
+payments	authorized	21
+payments	released	6
+kyc	pending	2
+kyc	verified	2

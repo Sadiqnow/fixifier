@@ -1,5 +1,7 @@
 # Day 1 database handoff
 
+Follow-up: actual staging metadata has now been inspected and the user confirmed local MariaDB is staging. See DATABASE_DEVELOPER_HANDOFF.md and DATABASE_SCHEMA_OBSERVED.txt for current evidence and finance schema proposal. Backup remains pending an approved outside-webroot destination.
+
 23 September 2026. **Design only: no schema, seeds, or database records changed by this handoff.** The shared Day 1 contract controls public status names and payloads. All proposals below require implementation and migration tests on Day 2; they are not existing capabilities.
 
 ## Inspected baseline

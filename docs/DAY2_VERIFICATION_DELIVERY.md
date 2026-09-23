@@ -1,0 +1,13 @@
+# Day 2 verification: first integration slice
+
+Delivered: `/job-verification?booking={id}` renders `verification-live.blade.php` and loads authorized booking/evidence from existing APIs. `/job-verification` presents a paginated role-scoped booking picker. Customer, technician and administrator booking rows now link to selected booking IDs; generic sidebar links use the picker. Login preserves the selected booking through a validated numeric parameter and fixed same-app destination.
+
+The original job-verification.blade.php is retained as an unrouted design reference. Original CSS was extracted unchanged into public/css/job-verification.css; active layout retains evidence, timeline, dispute/payment tabs and confirmation modal. Fixed sample content is replaced with stored booking facts. The active script has no localStorage decision state.
+
+Only the owning customer in evidence_submitted state sees customer actions. Existing Laravel ownership/role checks remain authoritative. Approval/dispute POST responses are followed by a fresh detail GET. Conflicts reload state; uncertain network outcomes require refresh before retry. Mutations and post-success refresh errors are distinguished. Technician/admin views are read-only for customer approval; administrator resolution remains in the admin portal.
+
+Private evidence is fetched with bearer authentication and rendered using revocable blob URLs. All available before/after records are displayed. Timeline uses actual timestamps exposed by the current API; it does not invent approval or work-start timestamps. Payment labels describe recorded states and disclose demo/provider limitations. Dispute photo input remains disabled because there is no attachment endpoint. Work rounds and dispute history are not implemented by this slice.
+
+Validation: `php artisan test --no-ansi` → **19 passed, 273 assertions**. New VerificationPageTest covers live-view routing/no embedded demo job, forbidden unrelated read/approval, and persisted owner approval after a fresh GET. Existing tests cover evidence access, dispute isolation, duplicate requests and rollback. HTTP checks returned 200 for picker/detail URLs, script, stylesheet and admin page. No live staging booking was mutated for validation. No schema migrations applied.
+
+Limitations: browser JavaScript execution, keyboard/mobile visual comparison and three-role end-to-end UAT have not been executed. Backend tests/HTTP checks are not browser acceptance evidence. This completes the code integration slice, not the full Day 2 work-round/KYC gate. Next: browser walkthrough; schema/backup prerequisites for round-aware evidence and genuine KYC.

@@ -34,7 +34,7 @@ async function load() {
         const data = result.records, rows = data.data; let headers, cells;
         if (['bookings','evidence','disputes'].includes(current)) {
             headers = ['Reference','Customer / technician','Service','Quotation','Status','Action'];
-            cells = rows.map(j=>[esc(j.reference),`${esc(j.customer?.name)}<br>${esc(j.technician?.name)}`,esc(j.service_category),j.quotation?money(j.quotation.amount_minor):'—',esc(j.status),`<button class="btn secondary" onclick="reviewJob(${j.id})">Review</button>`]);
+            cells = rows.map(j=>[esc(j.reference),`${esc(j.customer?.name)}<br>${esc(j.technician?.name)}`,esc(j.service_category),j.quotation?money(j.quotation.amount_minor):'—',esc(j.status),`<button class="btn secondary" onclick="reviewJob(${j.id})">Review</button> <a class="btn secondary" href="${esc(document.querySelector('meta[name="verification-url"]').content)}?booking=${j.id}">Verification</a>`]);
         } else if (current === 'technicians') {
             headers = ['ID','Name','Email','Trade','KYC status']; cells = rows.map(t=>[t.id,esc(t.name),esc(t.email),esc(t.trade),esc(t.kyc_status || 'No profile submitted')]);
         } else if (current === 'customers') {

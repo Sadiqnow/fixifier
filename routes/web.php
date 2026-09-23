@@ -9,5 +9,5 @@ Route::view('/register', 'marketplace')->name('register');
 Route::view('/book', 'marketplace')->name('booking.create');
 Route::view('/technician/login', 'marketplace')->name('technician.login');
 Route::view('/technician/register', 'marketplace')->name('technician.register');
-Route::view('/job-verification', 'job-verification')
+Route::view('/job-verification', 'verification-live')
     ->name('job.verification');

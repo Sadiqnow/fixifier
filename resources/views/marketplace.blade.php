@@ -11,7 +11,7 @@
     <meta name="description" content="Book repairs, manage quotations and review before-and-after evidence with Fixifier Plus.">
     <link rel="stylesheet" href="{{ asset('css/marketplace.css') }}">
     <script src="{{ asset('js/marketplace.js') }}" defer></script>
-</head>
+<meta name="verification-url" content="{{ route('job.verification') }}"></head>
 <body>
 <section id="login" class="login">
     <div class="login-art"><div class="brand"><div class="mark">F+</div> Fixifier Plus</div><h1>Repairs managed with proof, trust and clarity.</h1><p>One connected workspace for customers, technicians and service administrators.</p><div class="trust"><div><b>Book</b>Find repair support</div><div><b>Track</b>Follow every step</div><div><b>Review</b>See the evidence</div></div></div>
