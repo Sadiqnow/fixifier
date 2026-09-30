@@ -8,7 +8,7 @@
     const money = value => new Intl.NumberFormat('en-NG', {style:'currency', currency:'NGN'}).format(Number(value || 0) / 100);
     const label = value => String(value).replaceAll('_', ' ');
     let token = sessionStorage.getItem('fixifier-token'), user, jobs = [], view = 'overview', register = false, page = 1, lastPage = 1;
-    let urls = [], toastTimer;
+    let urls = [], toastTimer, reviewedBooking;
 
     async function api(path, {method = 'GET', body, blob = false} = {}) {
         const headers = {Accept:'application/json'};
@@ -99,6 +99,7 @@
     function card(job) {
         let buttons = action('View details','details',job.id);
         buttons += `<a class="btn secondary small" href="${escape($('meta[name="verification-url"]').content)}?booking=${job.id}">Job verification</a>`;
+        if (user.role === 'customer' && job.status === 'completed' && !job.review) buttons += action('Rate technician','rating',job.id);
         if (user.role === 'customer' && job.status === 'quoted') buttons += action('Accept quotation','accept',job.id);
         if (user.role === 'technician' && job.status === 'requested') buttons += action('Send quotation','quote',job.id);
         if (user.role === 'technician' && job.status === 'confirmed') buttons += action('Start job','start',job.id);
@@ -109,21 +110,28 @@
     async function renderBooking() {
         $('#main').innerHTML = heading('Book a service', 'Loading technicians…');
         try {
-            const technicians = (await api('/technicians')).data;
+            const directory = await api('/technicians'), technicians = directory.data;
+            const choices = (name,title,values) => `<div class="field"><label for="f-${name}">${escape(title)}</label><select id="f-${name}" name="${name}" required><option value="">Choose ${escape(title.toLowerCase())}</option>${values.map(v=>`<option value="${escape(v)}">${escape(v)}</option>`).join('')}</select></div>`;
             if (view !== 'book') return;
-            $('#main').innerHTML = heading('Book a service','Describe the issue and request a quotation.') + `<div class="card"><form id="bookingForm" class="form two-col">${field('service_category','Service category','text','maxlength="100" placeholder="e.g. Air conditioner repair"')}<div class="field"><label for="f-technician">Technician</label><select id="f-technician" name="technician_id" required><option value="">Select a technician</option>${technicians.map(t => `<option value="${t.id}">${escape(t.name)}</option>`).join('')}</select></div>${area('description','What needs repair?')}${field('address','Service address','text','maxlength="1000"')}${field('scheduled_at','Preferred date and time','datetime-local')}<p class="meta span2">${technicians.length ? 'Your technician will respond with a quotation.' : 'No technicians are registered yet. Please check again later.'}</p><p id="bookingError" class="notice hidden span2" role="alert"></p><button class="btn" ${technicians.length ? '' : 'disabled'}>Request quotation</button></form></div>`;
+            $('#main').innerHTML = heading('Book a service','Describe the issue and request a quotation.') + `<div class="card"><form id="bookingForm" class="form two-col">${choices('service_category','Service category',directory.categories)}${choices('service_area','Service area',directory.areas)}<div class="field"><label for="f-technician">Technician</label><select id="f-technician" name="technician_id"><option value="">Let the admin assign a technician</option>${technicians.map(t => `<option value="${t.id}">${escape(t.name)} · ${escape(t.service_category)} · ${escape(t.service_area)}</option>`).join('')}</select></div>${area('description','What needs repair?')}${field('address','Service address','text','maxlength="1000"')}${field('scheduled_at','Preferred date and time','datetime-local')}<p class="meta span2">Choose a matching technician, or send the request for admin assignment.</p><p id="bookingError" class="notice hidden span2" role="alert"></p><button class="btn" ${directory.categories.length && directory.areas.length ? '' : 'disabled'}>Request quotation</button></form></div>`;
             $('#bookingForm').onsubmit = async event => {
                 event.preventDefault(); const button = event.currentTarget.querySelector('button'); button.disabled = true;
                 const data = Object.fromEntries(new FormData(event.currentTarget)); data.scheduled_at = new Date(data.scheduled_at).toISOString();
                 try { await api('/bookings',{method:'POST',body:data}); view = 'jobs'; page = 1; await refresh(); toast('Quotation requested.'); }
                 catch (error) { $('#bookingError').textContent = error.message; $('#bookingError').classList.remove('hidden'); button.disabled = false; }
             };
-            $('#f-service_category').value = query.get('service') || '';
+            const service = query.get('service') || '';
+            $('#f-service_category').value = directory.categories.find(c=>c.toLowerCase().startsWith(service.toLowerCase())) || '';
+            $('#f-technician').onchange = event => {
+                const tech = technicians.find(t=>Number(t.id)===Number(event.target.value));
+                if (tech) { $('#f-service_category').value=tech.service_category; $('#f-service_area').value=tech.service_area; }
+            };
         } catch (error) { toast(error.message); }
     }
     async function details(id) {
         const job = (await api(`/bookings/${id}`)).data;
-        modal(job.service_category, `<p class="meta">${escape(job.reference)} · ${escape(label(job.status))}</p><p>${escape(job.description)}</p><p><b>Customer:</b> ${escape(job.customer?.name)}</p><p><b>Technician:</b> ${escape(job.technician?.name || 'Unassigned')}</p><p>${escape(job.address)}</p><p>${job.scheduled_at ? escape(new Date(job.scheduled_at).toLocaleString()) : 'No appointment date'}</p>${job.quotation ? `<div class="job"><b>${money(job.quotation.amount_minor)}</b><p>${escape(job.quotation.scope)}</p></div>` : ''}<h3>Job evidence</h3><div class="evidence">${job.evidence.map(e => `<div><b>${escape(label(e.type))}</b><img class="preview" data-evidence="${e.id}" alt="${escape(e.type)} repair evidence"><p>${escape(e.note)}</p></div>`).join('') || '<p>No evidence uploaded.</p>'}</div>${job.dispute ? `<div class="notice"><b>${escape(job.dispute.reason)}</b><p>${escape(job.dispute.details)}</p><p>${escape(job.dispute.resolution || '')}</p></div>` : ''}<div class="job-actions">${user.role === 'customer' && job.status === 'evidence_submitted' ? action('Approve completion','approve',id) + action('Raise dispute','dispute',id) : ''}${user.role === 'admin' && job.dispute?.status === 'open' ? action('Resolve dispute','resolve',job.dispute.id) : ''}</div>`);
+        reviewedBooking = {id:job.id,round:job.current_work_round};
+        modal(job.service_category, `<p class="meta">${escape(job.reference)} · ${escape(label(job.status))}</p><p>${escape(job.description)}</p><p><b>Customer:</b> ${escape(job.customer?.name)}</p><p><b>Technician:</b> ${escape(job.technician?.name || 'Unassigned')}</p><p>${escape(job.address)}</p><p>${job.scheduled_at ? escape(new Date(job.scheduled_at).toLocaleString()) : 'No appointment date'}</p>${job.quotation ? `<div class="job"><b>${money(job.quotation.amount_minor)}</b><p>${escape(job.quotation.scope)}</p></div>` : ''}<h3>Job evidence</h3><div class="evidence">${job.evidence.map(e => `<div><b>Round ${e.work_round} · ${escape(label(e.type))}</b><img class="preview" data-evidence="${e.id}" alt="${escape(e.type)} repair evidence"><p>${escape(e.note)}</p></div>`).join('') || '<p>No evidence uploaded.</p>'}</div>${job.dispute ? `<div class="notice"><b>${escape(job.dispute.reason)}</b><p>${escape(job.dispute.details)}</p><p>${escape(job.dispute.resolution || '')}</p></div>` : ''}<div class="job-actions">${user.role === 'customer' && job.status === 'evidence_submitted' ? action('Approve completion','approve',id) + action('Raise dispute','dispute',id) : ''}${user.role === 'admin' && job.dispute?.status === 'open' ? action('Resolve dispute','resolve',job.dispute.id) : ''}</div>`);
         await Promise.all(job.evidence.map(async evidence => {
             const img = $(`[data-evidence="${evidence.id}"]`);
             try { const blob = await api(`/evidence/${evidence.id}`,{blob:true}); if (!img.isConnected) return; const url = URL.createObjectURL(blob); urls.push(url); img.src = url; }
@@ -134,12 +142,14 @@
         if (type === 'refresh') return refresh();
         if (type === 'previous' || type === 'next') { page += type === 'next' ? 1 : -1; return refresh(); }
         if (type === 'details') return details(id);
+        if (type === 'rating') return form('Rate your technician',field('stars','Stars (1–5)','number','min="1" max="5" step="1"') + area('comment','Your review',10),data=>api(`/bookings/${id}/rating`,{method:'POST',body:Object.fromEntries(data)}));
         if (type === 'quote') return form('Submit quotation', field('amount','Amount (₦)','number','min="100" step="0.01"') + area('scope','Scope of work',10) + field('expires_at','Valid until','datetime-local'), data => api(`/bookings/${id}/quotation`,{method:'POST',body:{amount_minor:Math.round(Number(data.get('amount')) * 100),currency:'NGN',scope:data.get('scope'),expires_at:new Date(data.get('expires_at')).toISOString()}}));
         if (type === 'upload') return form('Upload job evidence','<div class="field"><label for="evidenceType">Evidence type</label><select name="type" id="evidenceType"><option value="before">Before repair</option><option value="after">After repair</option></select></div>' + field('photo','Photo','file','accept="image/jpeg,image/png,image/webp"') + '<div class="field"><label for="note">Notes (optional)</label><textarea id="note" name="note" maxlength="2000"></textarea></div><p class="meta">Upload both before and after photos, then submit the job for approval. Maximum 10 MB per photo.</p>', data => { data.set('captured_at',new Date().toISOString()); return api(`/bookings/${id}/evidence`,{method:'POST',body:data}); });
-        if (type === 'dispute') return form('Raise a dispute',field('reason','Reason','text','maxlength="120"') + area('details','Describe the issue'), data => api(`/bookings/${id}/dispute`,{method:'POST',body:Object.fromEntries(data)}));
+        if (['approve','dispute'].includes(type) && Number(reviewedBooking?.id) !== Number(id)) throw new Error('Open the booking evidence before deciding.');
+        if (type === 'dispute') return form('Raise a dispute',field('reason','Reason','text','maxlength="120"') + area('details','Describe the issue'), data => api(`/bookings/${id}/dispute`,{method:'POST',body:{...Object.fromEntries(data),expected_work_round:reviewedBooking.round}}));
         if (type === 'resolve') return form('Resolve dispute','<div class="field"><label for="decision">Decision</label><select id="decision" name="decision"><option value="rework">Return for rework</option><option value="release">Approve release</option><option value="refund">Refund</option></select></div>' + area('resolution','Resolution details'), data => api(`/disputes/${id}/resolve`,{method:'POST',body:Object.fromEntries(data)}));
         const endpoints = {accept:'quotation/accept',start:'start',submit:'evidence/submit',approve:'approve'};
-        if (endpoints[type]) { await api(`/bookings/${id}/${endpoints[type]}`,{method:'POST'}); closeModal(); await refresh(); toast('Booking updated.'); }
+        if (endpoints[type]) { await api(`/bookings/${id}/${endpoints[type]}`,{method:'POST',body:type === 'approve' ? {expected_work_round:reviewedBooking.round} : undefined}); closeModal(); await refresh(); toast('Booking updated.'); }
     }
     document.addEventListener('click', async event => {
         const nav = event.target.closest('[data-view]');

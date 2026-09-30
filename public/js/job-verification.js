@@ -36,7 +36,7 @@
         if(busy || !eligible())return;
         busy=true; $('modal').querySelectorAll('button').forEach(b=>b.disabled=true);
         let succeeded=false;
-        try { await api(`/bookings/${id}/${action}`,{body}); succeeded=true; busy=false; close(); booking=null; $('reviewActions').classList.add('hidden'); $('disputePageBtn').classList.add('hidden'); await load(); message(action==='approve'?'Approval saved.':'Dispute saved for administrator review.'); }
+        try { await api(`/bookings/${id}/${action}`,{body:{...body,expected_work_round:booking.current_work_round}}); succeeded=true; busy=false; close(); booking=null; $('reviewActions').classList.add('hidden'); $('disputePageBtn').classList.add('hidden'); await load(); message(action==='approve'?'Approval saved.':'Dispute saved for administrator review.'); }
         catch(error) {
             if(succeeded) { message('Your action was saved, but the updated booking could not be loaded. Refresh this page before taking further action.',true); }
             else if(error.status===409) { busy=false; close(); try {await load();}catch{} message(error.message+' The page has requested the latest booking state.',true); }
@@ -46,7 +46,7 @@
     $('confirmApprove').onclick=()=>mutate('approve',{});
     $('disputeForm').onsubmit=e=>{e.preventDefault();mutate('dispute',{reason:$('reason').value,details:$('details').value});};
     async function photoStage(type) {
-        const records=booking.evidence.filter(e=>e.type===type), container=$(type+'Photos');
+        const records=booking.evidence.filter(e=>e.type===type && e.work_round===booking.current_work_round), container=$(type+'Photos');
         container.innerHTML=records.map(e=>`<div class="photo ${type==='after'?'after':''}" style="margin-bottom:10px"><span>Loading evidence…</span><img data-photo="${e.id}" alt="${type} evidence" hidden></div><small class="muted">Captured: ${esc(date(e.captured_at))}</small>`).join('') || '<div class="photo"><div class="fallback">No evidence submitted.</div></div>';
         await Promise.all(records.map(async e=>{const img=container.querySelector(`[data-photo="${e.id}"]`);try{const blob=await api(`/evidence/${e.id}`,{image:true});if(!img.isConnected)return;const url=URL.createObjectURL(blob);urls.push(url);img.src=url;img.hidden=false;img.previousElementSibling.hidden=true;}catch{if(img.isConnected)img.previousElementSibling.textContent='Evidence unavailable. Refresh to retry.';}}));
     }
@@ -57,14 +57,14 @@
         $('reference').textContent='JOB '+booking.reference; $('service').textContent=booking.service_category;
         $('technician').textContent=`Technician: ${booking.technician?.name || 'Unassigned'} · ${booking.address}`;
         $('charge').textContent=booking.quotation?money(booking.quotation.amount_minor):'Not quoted';
-        $('stageCount').textContent=new Set(booking.evidence.map(e=>e.type)).size+' stages'; $('jobDate').textContent=booking.scheduled_at?new Date(booking.scheduled_at).toLocaleDateString():'Not scheduled';
+        $('stageCount').textContent='Round '+booking.current_work_round+' · '+new Set(booking.evidence.filter(e=>e.work_round===booking.current_work_round).map(e=>e.type)).size+' stages'; $('jobDate').textContent=booking.scheduled_at?new Date(booking.scheduled_at).toLocaleDateString():'Not scheduled';
         $('description').textContent=booking.description;
-        $('completionNote').textContent=booking.evidence.filter(e=>e.type==='after' && e.note).map(e=>e.note).join('\n') || 'No completion note recorded.';
+        $('completionNote').textContent=booking.evidence.filter(e=>e.type==='after' && e.work_round===booking.current_work_round && e.note).map(e=>e.note).join('\n') || 'No completion note recorded.';
         $('reviewActions').classList.toggle('hidden',!eligible()); $('disputePageBtn').classList.toggle('hidden',!eligible());
         $('resultMessage').textContent=eligible()?'Review the evidence before approving or raising a dispute.':user.role!=='customer'?'Read-only customer review. Only this booking’s customer can approve or dispute completion.':`Current booking state: ${label(booking.status)}. Approval is available only when evidence is submitted.`;
         const dispute=booking.dispute;
         $('disputeDetails').innerHTML=dispute?`<h3>Case #${dispute.id}</h3><p>${esc(dispute.reason)}</p><p>${esc(dispute.details)}</p><div class="notice">Status: ${esc(label(dispute.status))}</div><p>${esc(dispute.resolution || '')}</p>`:'<div class="notice">No dispute has been submitted for this job.</div>';
-        const events=[['Service requested',booking.created_at],['Quotation accepted',booking.quotation?.accepted_at],...booking.evidence.map(e=>[`${label(e.type)} evidence uploaded`,e.created_at]),['Dispute opened',dispute?.created_at],['Dispute resolved',dispute?.resolved_at]].filter(e=>e[1]).sort((a,b)=>new Date(a[1])-new Date(b[1]));
+        const events=[['Service requested',booking.created_at],['Quotation accepted',booking.quotation?.accepted_at],...booking.evidence.map(e=>[`Round ${e.work_round}: ${label(e.type)} evidence uploaded`,e.created_at]),['Dispute opened',dispute?.created_at],['Dispute resolved',dispute?.resolved_at]].filter(e=>e[1]).sort((a,b)=>new Date(a[1])-new Date(b[1]));
         $('timeline').innerHTML=events.map(([title,time])=>`<li><strong>${esc(title)}</strong><small>${esc(date(time))}</small></li>`).join('');
         $('paymentTotal').textContent=booking.payment?money(booking.payment.amount_minor):booking.quotation?money(booking.quotation.amount_minor):'Not recorded'; $('provider').textContent=booking.payment?.provider || 'Not recorded'; $('settlement').textContent=label(booking.payment?.status);
         $('paymentNotice').textContent=booking.payment?.provider==='demo'?'Simulated payment record. No money is collected, held or transferred.':'This screen shows recorded payment information. Approval does not initiate or prove a payment-provider transfer.';

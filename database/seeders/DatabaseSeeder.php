@@ -1,4 +1,14 @@
 <?php
+
 namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
-class DatabaseSeeder extends Seeder { public function run():void { $this->call(DemoMarketplaceSeeder::class); } }
+
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $this->call(DemoMarketplaceSeeder::class);
+        $this->call(AdminMarketplaceSeeder::class);
+    }
+}

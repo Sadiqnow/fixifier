@@ -11,7 +11,7 @@ class AdminPortalController extends Controller
 {
     public function index(Request $request)
     {
-        abort_unless($request->user()->role->value === 'admin', 403);
+        abort_unless($request->user()->role->value === 'admin' && $request->user()->is_active, 403);
         $data = $request->validate(['section' => 'required|in:overview,technicians,bookings,evidence,disputes,customers,finance,audit']);
         $section = $data['section'];
         $summary = [

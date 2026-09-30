@@ -4,7 +4,7 @@ Production-oriented API foundation for the Fixifier service marketplace.
 
 ## Included
 
-- Laravel 12, PHP 8.3 and PostgreSQL.
+- Laravel 12 on PHP 8.2+, with PostgreSQL or MySQL/MariaDB.
 - Sanctum token authentication.
 - Customer, technician and administrator roles.
 - Technician profile and KYC state.
@@ -20,7 +20,9 @@ Production-oriented API foundation for the Fixifier service marketplace.
 composer install
 cp .env.example .env
 php artisan key:generate
-php artisan migrate --seed
+php artisan migrate
+php artisan db:seed --class=AdminMarketplaceSeeder
+php artisan fixifier:admin
 php artisan storage:link
 php artisan serve
 ```
@@ -54,6 +56,6 @@ The application root `/` serves the supplied green-and-gold landing page from `r
 
 The frontend connects to `/api/v1` for authentication, booking lists and creation, quotations, job progress, private evidence uploads and review, customer approval, and administrator dispute resolution. Session tokens are retained in sessionStorage for the current tab. Evidence images require authenticated booking ownership or administrator access. Booking summaries and payment records cover the current paginated result page.
 
-Administrator sign-in opens `/admin`, using the supplied dashboard design as a Blade view. Its paginated sections load real technician profiles, customers, bookings, evidence, disputes, payment records and audit events through an administrator-only API. Dispute resolution uses the existing workflow endpoint. KYC approval and profile editing are not exposed by this frontend. The technician directory lists registered technicians and does not claim KYC verification. Payments display existing records; a payment provider must still be integrated before accepting real payments.
+Administrator sign-in is now `/admin/login`, using a separate Laravel session with CSRF protection. The 12 admin journey pages retain the supplied HTML/CSS design and operate on existing marketplace records. Admins configure services and areas, verify protected identity documents, route requests, review evidence, resolve work-round disputes and moderate ratings. Technician discovery and assignment require approved, active, available profiles in active services and areas. Customer and technician APIs keep bearer-token authentication. Completion records a pending settlement; it never proves a transfer. See [Admin portal integration](docs/ADMIN_PORTAL_INTEGRATION.md) for migrations, setup and operating limits.
 
 Run `php artisan test` to validate the application, including marketplace authorization tests. Composer targets PHP 8.2.12 to match local XAMPP. Keep this platform setting when updating dependencies so the lock file remains compatible with the local runtime.

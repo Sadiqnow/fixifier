@@ -1,0 +1,2 @@
+@props(['name','label','value'=>'','type'=>'text','min'=>null,'max'=>null,'step'=>null])
+<div class="group"><label for="{{ $name }}">{{ $label }}</label><input class="field" id="{{ $name }}" name="{{ $name }}" type="{{ $type }}" value="{{ old($name,$value) }}" @if($min !== null) min="{{ $min }}" @endif @if($max !== null) max="{{ $max }}" @endif @if($step !== null) step="{{ $step }}" @endif required {{ $attributes }}></div>

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\JobEvidence;
-use App\Models\User;
+use App\Models\ServiceArea;
+use App\Services\EligibilityService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class PortalController extends Controller
@@ -13,12 +16,16 @@ class PortalController extends Controller
     public function me(Request $request)
     {
         return response()->json(['data' => $request->user(), 'technician_profile' => $request->user()->role->value === 'technician'
-            ? \Illuminate\Support\Facades\DB::table('technician_profiles')->where('user_id', $request->user()->id)->first() : null]);
+            ? DB::table('technician_profiles')->where('user_id', $request->user()->id)->first() : null]);
     }
 
     public function technicians()
     {
-        return response()->json(['data' => User::where('role', 'technician')->orderBy('name')->get(['id', 'name'])]);
+        $users = app(EligibilityService::class)->query()->with('technicianProfile')->orderBy('name')->get();
+
+        return response()->json(['data' => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'service_category' => $u->technicianProfile->trade, 'service_area' => $u->technicianProfile->service_location]),
+            'categories' => Category::where('active', true)->orderBy('name')->pluck('name'),
+            'areas' => ServiceArea::where('active', true)->orderBy('name')->pluck('name')]);
     }
 
     public function evidence(Request $request, JobEvidence $evidence)

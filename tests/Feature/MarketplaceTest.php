@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Booking;
 use App\Models\JobEvidence;
+use App\Models\TechnicianProfile;
 use App\Models\User;
+use Database\Seeders\AdminMarketplaceSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
@@ -21,15 +23,15 @@ class MarketplaceTest extends TestCase
 
     public function test_admin_dashboard_data_requires_an_administrator(): void
     {
-        $this->get('/admin')->assertOk()->assertSee('js/admin.js');
+        $this->get('/admin')->assertRedirect('/admin/login');
         $this->getJson('/api/v1/admin/dashboard?section=overview')->assertUnauthorized();
         Sanctum::actingAs($this->account('customer'));
         $this->getJson('/api/v1/admin/dashboard?section=customers')->assertForbidden();
         Sanctum::actingAs($this->account('technician'));
         $this->getJson('/api/v1/admin/dashboard?section=customers')->assertForbidden();
         Sanctum::actingAs($this->account('admin'));
-        foreach (['overview','technicians','bookings','evidence','disputes','customers','finance','audit'] as $section) {
-            $this->getJson('/api/v1/admin/dashboard?section='.$section)->assertOk()->assertJsonStructure(['summary', 'records' => ['data','current_page','last_page']]);
+        foreach (['overview', 'technicians', 'bookings', 'evidence', 'disputes', 'customers', 'finance', 'audit'] as $section) {
+            $this->getJson('/api/v1/admin/dashboard?section='.$section)->assertOk()->assertJsonStructure(['summary', 'records' => ['data', 'current_page', 'last_page']]);
         }
     }
 
@@ -47,6 +49,8 @@ class MarketplaceTest extends TestCase
     {
         $customer = $this->account('customer');
         $technician = $this->account('technician');
+        TechnicianProfile::create(['user_id' => $technician->id, 'trade' => 'Plumbing', 'service_location' => 'Lagos', 'kyc_status' => 'verified']);
+        $this->seed(AdminMarketplaceSeeder::class);
         Sanctum::actingAs($customer);
         $this->getJson('/api/v1/me')->assertJsonPath('data.id', $customer->id);
         $this->getJson('/api/v1/technicians')->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $technician->id)->assertJsonMissingPath('data.0.email');

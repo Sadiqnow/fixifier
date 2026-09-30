@@ -2,8 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Models\{AuditEvent, Booking, Payment, Quotation, User};
+use App\Http\Controllers\Api\V1\WorkflowController;
+use App\Models\AuditEvent;
+use App\Models\Booking;
+use App\Models\Payment;
+use App\Models\Quotation;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Request;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -20,6 +27,7 @@ class BookingIsolationTest extends TestCase
     {
         $booking = Booking::create(['reference' => uniqid('FX-'), 'customer_id' => $customer->id, 'technician_id' => $technician->id, 'service_category' => 'Plumbing', 'description' => 'Repair a leaking kitchen tap.', 'address' => '10 Main Street', 'status' => $status]);
         Payment::create(['booking_id' => $booking->id, 'provider' => 'demo', 'provider_reference' => uniqid('DEMO-'), 'amount_minor' => 10000, 'currency' => 'NGN', 'status' => 'authorized', 'authorized_at' => now()]);
+
         return $booking;
     }
 
@@ -35,7 +43,7 @@ class BookingIsolationTest extends TestCase
         $this->postJson("/api/v1/bookings/{$a->id}/approve")->assertOk()->assertJsonPath('data.status', 'completed');
         $this->assertSame($snapshot, $b->fresh()->getAttributes());
         $this->assertSame($payment, $b->payment()->first()->getAttributes());
-        $this->assertDatabaseHas('payments', ['booking_id' => $a->id, 'status' => 'released']);
+        $this->assertDatabaseHas('payments', ['booking_id' => $a->id, 'status' => 'release_pending']);
         $this->postJson("/api/v1/bookings/{$a->id}/approve")->assertConflict()->assertJsonPath('current_status', 'completed');
         $this->postJson("/api/v1/bookings/{$a->id}/dispute", $this->disputeData())->assertConflict()->assertJsonPath('current_status', 'completed');
         $this->assertDatabaseCount('audit_events', 1);
@@ -142,7 +150,9 @@ class BookingIsolationTest extends TestCase
         $customer = $this->account('customer');
         $booking = $this->booking($customer, $this->account('technician'));
         Sanctum::actingAs($customer);
-        AuditEvent::creating(function () { throw new \RuntimeException('Simulated audit failure'); });
+        AuditEvent::creating(function () {
+            throw new \RuntimeException('Simulated audit failure');
+        });
         try {
             $this->postJson("/api/v1/bookings/{$booking->id}/approve")->assertStatus(500);
             $this->assertSame('evidence_submitted', $booking->fresh()->status->value);
@@ -159,12 +169,12 @@ class BookingIsolationTest extends TestCase
         $staleBooking = $booking->fresh();
         Sanctum::actingAs($customer);
         $this->postJson("/api/v1/bookings/{$booking->id}/approve")->assertOk();
-        $request = \Illuminate\Http\Request::create('/dispute', 'POST', $this->disputeData());
+        $request = Request::create('/dispute', 'POST', $this->disputeData());
         $request->setUserResolver(fn () => $customer);
         try {
-            app(\App\Http\Controllers\Api\V1\WorkflowController::class)->dispute($request, $staleBooking);
+            app(WorkflowController::class)->dispute($request, $staleBooking);
             $this->fail('A stale bound booking must not bypass the locked state check.');
-        } catch (\Illuminate\Http\Exceptions\HttpResponseException $exception) {
+        } catch (HttpResponseException $exception) {
             $this->assertSame(409, $exception->getResponse()->getStatusCode());
             $this->assertSame('completed', $exception->getResponse()->getData(true)['current_status']);
         }
@@ -177,7 +187,9 @@ class BookingIsolationTest extends TestCase
         $customer = $this->account('customer');
         $booking = $this->booking($customer, $this->account('technician'));
         Sanctum::actingAs($customer);
-        AuditEvent::creating(function () { throw new \RuntimeException('Simulated audit failure'); });
+        AuditEvent::creating(function () {
+            throw new \RuntimeException('Simulated audit failure');
+        });
         try {
             $this->postJson("/api/v1/bookings/{$booking->id}/dispute", $this->disputeData())->assertStatus(500);
             $this->assertSame('evidence_submitted', $booking->fresh()->status->value);
@@ -189,4 +201,3 @@ class BookingIsolationTest extends TestCase
         }
     }
 }
-

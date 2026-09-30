@@ -1,0 +1,32 @@
+/* Laravel routing/accessibility adapters. Original admin.css is byte-for-byte extracted from the HTML. */
+a.btn { display:inline-flex; align-items:center; justify-content:center; text-decoration:none; }
+.nav a { width:100%; background:transparent; border:0; border-radius:9px; color:#c2d0dc; text-align:left; padding:12px; display:flex; gap:11px; align-items:center; font-weight:700; text-decoration:none; }
+.nav a:hover,.nav a.active { background:#263d55; color:#fff; }
+.nav a.active { box-shadow:inset 3px 0 #ee8244; }
+.segment a { border:1px solid #dbe5ec; background:#fff; border-radius:100px; padding:8px 13px; font-weight:700; color:#627486; text-decoration:none; }
+.segment a.active { background:#1b344c; color:white; border-color:#1b344c; }
+.actions form { display:inline-flex; margin:0; }
+.feedback { margin-bottom:18px; }
+.group label .field { display:block; margin-top:7px; width:100%; }
+.login-wrap { max-width:470px; margin:8vh auto; padding:20px; }
+.login-wrap .brand { color:#112239; margin-bottom:26px; }
+.login-wrap .brand b { color:white; }
+:focus-visible { outline:3px solid #c85c24; outline-offset:3px; }
+.dialog { max-height:88vh; overflow-y:auto; }
+@media(max-width:680px) { .topright { gap:6px; } .topright .avatar { display:none; } }
+
+/* Match navigation links to the original button typography. */
+.nav a, .segment a { font-size:inherit; }
+
+/* Static layout declarations extracted from the converted Blade pages. */
+.fx-layout-1 { margin-top:17px }
+.fx-layout-2 { font:800 1.45rem Manrope }
+.fx-layout-3 { margin-bottom:18px }
+.fx-layout-4 { margin:17px 0 }
+.fx-layout-5 { margin-bottom:16px }
+.fx-layout-6 { margin-top:18px }
+.fx-layout-7 { margin-top:12px }
+.fx-layout-8 { margin-bottom:15px }
+.fx-layout-9 { margin:15px 0 }
+.fx-layout-10 { line-height:1.6 }
+.fx-layout-11 { margin-top:14px }
