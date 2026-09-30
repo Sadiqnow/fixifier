@@ -34,7 +34,7 @@ function card(job) {
     let actions=button('Details / evidence','details',job.id);
     actions+=`<a class="btn secondary" href="${esc(document.querySelector('meta[name="verification-url"]').content)}?booking=${job.id}">Job verification</a>`;
     if(job.status==='requested') actions+=button('Send quotation','quote',job.id);
-    if(job.status==='confirmed') actions+=button('Start job','start',job.id);
+    if(job.status==='confirmed') actions+=button('Upload before evidence','upload',job.id)+button('Start job','start',job.id);
     if(job.status==='in_progress') actions+=button('Upload evidence','upload',job.id)+button('Submit for approval','submit',job.id);
     return `<div class="job"><div class="jobhead"><strong>${esc(job.service_category)}</strong><span class="badge">${esc(job.status.replaceAll('_',' '))}</span></div><p>${esc(job.reference)} · ${esc(job.address)}</p><p>${esc(job.description)}</p><b>${job.quotation?money(job.quotation.amount_minor):'Quotation pending'}</b><div class="actions">${actions}</div></div>`;
 }
@@ -82,8 +82,11 @@ async function act(action,id) {
     if(action==='previous'||action==='next'){page+=action==='next'?1:-1;return load();}
     if(action==='details')return details(id);
     if(action==='quote')return form('Submit quotation',input('amount','Amount (₦)','number','min="100" step="0.01"')+'<label class="field">Scope of work<textarea name="scope" minlength="10" maxlength="5000" required></textarea></label>'+input('expires_at','Valid until','datetime-local'),data=>api(`/bookings/${id}/quotation`,'POST',{amount_minor:Math.round(Number(data.get('amount'))*100),currency:'NGN',scope:data.get('scope'),expires_at:new Date(data.get('expires_at')).toISOString()}));
-    if(action==='upload')return form('Upload job evidence','<label class="field">Stage<select name="type"><option value="before">Before repair</option><option value="after">After repair</option></select></label>'+input('photo','Photo (JPEG, PNG or WebP, max 10 MB)','file','accept="image/jpeg,image/png,image/webp"')+'<label class="field">Notes<textarea name="note" maxlength="2000"></textarea></label><p class="notice">Upload both before and after photos before submitting completion.</p>',data=>{data.set('captured_at',new Date().toISOString());return api(`/bookings/${id}/evidence`,'POST',data);});
-    if(action==='start'||action==='submit'){await api(`/bookings/${id}/${action==='start'?'start':'evidence/submit'}`,'POST');await load();toast(action==='start'?'Job started. Capture before evidence before repairs.':'Submitted for customer approval.');}
+    if(action==='upload') {
+        const job=(await api(`/bookings/${id}`)).data, stage=job.status==='confirmed'?'before':'after';
+        return form(`Upload ${stage} evidence · Round ${job.current_work_round}`,`<input type="hidden" name="type" value="${stage}">`+input('photo','Photo (JPEG, PNG or WebP, max 10 MB)','file','accept="image/jpeg,image/png,image/webp"')+'<label class="field">Notes<textarea name="note" maxlength="2000"></textarea></label><p class="notice">Before evidence is required before starting work. After evidence is captured during work.</p>',data=>{data.set('captured_at',new Date().toISOString());data.set('expected_work_round',job.current_work_round);return api(`/bookings/${id}/evidence`,'POST',data);});
+    }
+    if(action==='start'||action==='submit'){const job=(await api(`/bookings/${id}`)).data;await api(`/bookings/${id}/${action==='start'?'start':'evidence/submit'}`,'POST',{expected_work_round:job.current_work_round});await load();toast(action==='start'?'Job started.':'Submitted for customer approval.');}
 }
 document.addEventListener('click',async e=>{const button=e.target.closest('[data-action]');if(!button||button.disabled)return;button.disabled=true;try{await act(button.dataset.action,button.dataset.id);}catch(error){toast(error.message);}finally{button.disabled=false;}});
 (async()=>{try{const result=await api('/me');user=result.data;profile=result.technician_profile;if(user.role!=='technician')throw new Error('Please sign in with a technician account.');$('topName').textContent=user.name;$('topTrade').textContent=profile?.trade || 'Technician';await load();}catch(error){$('content').innerHTML=`<div class="card"><p>${esc(error.message)}</p><a href="${esc(login)}">Sign in</a></div>`;}})();
