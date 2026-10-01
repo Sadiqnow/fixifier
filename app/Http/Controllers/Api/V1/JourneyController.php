@@ -16,35 +16,28 @@ class JourneyController extends Controller
     {
         abort_unless($r->user()->role->value === 'technician', 403);
 
-        $input = $r->all();
-        $trade = $input['trade'] ?? $input['category'] ?? null;
-        $serviceLocation = $input['service_location'] ?? $input['service_area'] ?? $input['city'] ?? null;
-        $bio = $input['bio'] ?? $input['description'] ?? null;
-        $skills = $input['skills'] ?? $input['specialties'] ?? null;
-        $yearsExperience = $input['years_experience'] ?? $input['experience_years'] ?? $input['experience'] ?? null;
-        $indication = $input['indicative_price_minor'] ?? $input['starting_price_minor'] ?? $input['rate_minor'] ?? null;
-        $isAvailable = array_key_exists('is_available', $input) ? $input['is_available'] : ($input['availability'] ?? true);
-        $notes = $input['availability_notes'] ?? $input['availability_note'] ?? null;
+        $normalized = [
+            'trade' => $r->input('trade', $r->input('category')),
+            'service_location' => $r->input('service_location', $r->input('service_area', $r->input('city'))),
+            'bio' => $r->input('bio', $r->input('description')),
+            'skills' => $r->input('skills', $r->input('specialties')),
+            'years_experience' => $r->input('years_experience', $r->input('experience_years', $r->input('experience'))),
+            'indicative_price_minor' => $r->input('indicative_price_minor', $r->input('starting_price_minor', $r->input('rate_minor'))),
+            'is_available' => $r->has('is_available') ? $r->boolean('is_available') : $r->boolean('availability', true),
+            'availability_notes' => $r->input('availability_notes', $r->input('availability_note')),
+        ];
+        $r->merge(array_filter($normalized, fn ($value) => ! is_null($value)));
 
-        $data = Validator::make([
-            'trade' => $trade,
-            'service_location' => $serviceLocation,
-            'bio' => $bio,
-            'skills' => $skills,
-            'years_experience' => $yearsExperience,
-            'indicative_price_minor' => $indication,
-            'is_available' => $isAvailable,
-            'availability_notes' => $notes,
-        ], [
-            'trade' => ['required', Rule::in(Category::where('active', true)->pluck('name'))],
-            'service_location' => ['required', Rule::in(ServiceArea::where('active', true)->pluck('name'))],
+        $data = $r->validate([
+            'trade' => ['required', Rule::in(Category::where('active', true)->pluck('name')->all())],
+            'service_location' => ['required', Rule::in(ServiceArea::where('active', true)->pluck('name')->all())],
             'bio' => 'required|string|min:20|max:5000',
             'skills' => 'required|string|max:2000',
             'years_experience' => 'required|integer|between:0,80',
             'indicative_price_minor' => 'nullable|integer|between:0,100000000',
             'is_available' => 'required|boolean',
             'availability_notes' => 'nullable|string|max:2000',
-        ])->validate();
+        ]);
 
         $profileData = [
             'trade' => $data['trade'],
@@ -61,14 +54,13 @@ class JourneyController extends Controller
             $profileData['indicative_price_minor'] = $data['indicative_price_minor'];
         }
         if (Schema::hasColumn('technician_profiles', 'starting_price_minor')) {
-            $profileData['starting_price_minor'] = $data['indicative_price_minor'];
+            $profileData['starting_price_minor'] = $data['indicative_price_minor'] ?? null;
         }
         if (Schema::hasColumn('technician_profiles', 'availability_notes')) {
-            $profileData['availability_notes'] = $data['availability_notes'];
+            $profileData['availability_notes'] = $data['availability_notes'] ?? null;
         }
 
         $p = DB::transaction(function () use ($r, $profileData) {
-            // User lock also serializes first profile creation.
             \App\Models\User::whereKey($r->user()->id)->lockForUpdate()->firstOrFail();
             $p = TechnicianProfile::firstOrNew(['user_id' => $r->user()->id]);
             if ($p->exists && ($p->trade !== $profileData['trade'] || $p->service_location !== $profileData['service_location'])) {
@@ -78,9 +70,11 @@ class JourneyController extends Controller
                     $p->verification_version = ($p->verification_version ?? 0) + 1;
                 }
             }
-            $p->fill($profileData)->save();
+
+            $p->fill(array_filter($profileData, fn ($value) => ! is_null($value)))->save();
             return $p;
         });
+
         return response()->json(['data' => $p]);
     }
 
