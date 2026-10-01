@@ -90,6 +90,34 @@ class MarketplaceTest extends TestCase
         $this->assertDatabaseHas('technician_profiles', ['user_id' => $technician->id, 'trade' => 'Electrical', 'service_location' => 'Lagos', 'is_available' => true]);
     }
 
+    public function test_technician_profile_update_accepts_legacy_profile_field_names(): void
+    {
+        Category::create(['name' => 'Electrical', 'normalized_name' => 'electrical', 'active' => true]);
+        ServiceArea::create(['name' => 'Lagos', 'normalized_name' => 'lagos', 'active' => true]);
+
+        $technician = $this->account('technician');
+        Sanctum::actingAs($technician);
+
+        $payload = [
+            'trade' => 'Electrical',
+            'service_area' => 'Lagos',
+            'bio' => 'Qualified electrician with over 10 years of repair and installation work.',
+            'specialties' => 'Wiring, panel upgrades, lighting, fault finding, appliance installation',
+            'experience_years' => 10,
+            'starting_price_minor' => 180000,
+            'is_available' => false,
+            'availability_notes' => 'Weekday afternoons only.',
+        ];
+
+        $this->putJson('/api/v1/technician/profile', $payload)
+            ->assertOk()
+            ->assertJsonPath('data.trade', 'Electrical')
+            ->assertJsonPath('data.service_location', 'Lagos')
+            ->assertJsonPath('data.is_available', false);
+
+        $this->assertDatabaseHas('technician_profiles', ['user_id' => $technician->id, 'trade' => 'Electrical', 'service_location' => 'Lagos', 'is_available' => false, 'starting_price_minor' => 180000]);
+    }
+
     public function test_evidence_is_only_visible_to_booking_participants_and_administrators(): void
     {
         Storage::fake('private');
