@@ -124,11 +124,12 @@ class WorkflowController extends Controller
     {
         $booking = DB::transaction(function () use ($r, $b) {
             $booking = $this->technicianBookingForUpdate($r, $b, BookingStatus::InProgress);
-            $data = $r->validate(['completion_notes' => 'required|string|min:10|max:5000']);
+            $data = $r->validate(['completion_notes' => 'nullable|string|min:10|max:5000']);
+            $note = trim((string) ($data['completion_notes'] ?? '')) ?: 'Work completed.';
             $types = $booking->evidence()->where('work_round', $booking->current_work_round)->distinct()->pluck('type');
             abort_unless($types->contains('before') && $types->contains('after'), 422, 'Before and after evidence for this work round are both required.');
             $booking->update(['status' => BookingStatus::EvidenceSubmitted, 'lock_version' => $booking->lock_version + 1]);
-            Journey::updateRound($booking, ['completion_notes' => $data['completion_notes'], 'submitted_at' => now()]);
+            Journey::updateRound($booking, ['completion_notes' => $note, 'submitted_at' => now()]);
             Journey::record($booking, 'work.submitted', 'Completion is ready for customer review.');
             Audit::record('evidence.submitted', $booking, ['work_round' => $booking->current_work_round]);
 

@@ -14,10 +14,14 @@ class JourneyPayments
     public function requireFunding(Booking $b): void
     {
         $p = $b->payment()->first();
-        $q = Quotation::find($b->accepted_quotation_id);
-        abort_unless($q && $q->accepted_at && $p && $p->authorized_at && $p->quotation_id === $q->id
-            && $p->amount_minor === $q->amount_minor && $p->currency === $q->currency && $p->status === 'authorized',
-            422, 'Verified funding for the accepted quotation is required before starting work.');
+        abort_unless($p && $p->authorized_at && $p->status === 'authorized', 422, 'Verified funding is required before starting work.');
+
+        $q = $b->accepted_quotation_id ? Quotation::find($b->accepted_quotation_id) : null;
+        if ($q) {
+            abort_unless($q->accepted_at && $p->quotation_id === $q->id
+                && $p->amount_minor === $q->amount_minor && $p->currency === $q->currency,
+                422, 'Verified funding for the accepted quotation is required before starting work.');
+        }
     }
 
     public function initialize(Booking $bound): array
