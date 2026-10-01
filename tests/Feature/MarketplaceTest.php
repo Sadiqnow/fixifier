@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
+use App\Models\Category;
 use App\Models\JobEvidence;
+use App\Models\ServiceArea;
 use App\Models\TechnicianProfile;
 use App\Models\User;
 use Database\Seeders\AdminMarketplaceSeeder;
@@ -58,6 +60,34 @@ class MarketplaceTest extends TestCase
         $this->postJson('/api/v1/bookings', $data)->assertUnprocessable()->assertJsonValidationErrors('technician_id');
         $data['technician_id'] = $technician->id;
         $this->postJson('/api/v1/bookings', $data)->assertCreated()->assertJsonPath('data.status', 'requested');
+    }
+
+    public function test_technician_profile_update_persists_trade_service_area_and_availability(): void
+    {
+        Category::create(['name' => 'Electrical', 'normalized_name' => 'electrical', 'active' => true]);
+        ServiceArea::create(['name' => 'Lagos', 'normalized_name' => 'lagos', 'active' => true]);
+
+        $technician = $this->account('technician');
+        Sanctum::actingAs($technician);
+
+        $payload = [
+            'trade' => 'Electrical',
+            'service_location' => 'Lagos',
+            'bio' => 'Qualified electrician with over 10 years of repair and installation work.',
+            'skills' => 'Wiring, panel upgrades, lighting, fault finding, appliance installation',
+            'years_experience' => 10,
+            'indicative_price_minor' => 250000,
+            'is_available' => true,
+            'availability_notes' => 'Available evenings and Saturdays.',
+        ];
+
+        $this->putJson('/api/v1/technician/profile', $payload)
+            ->assertOk()
+            ->assertJsonPath('data.trade', 'Electrical')
+            ->assertJsonPath('data.service_location', 'Lagos')
+            ->assertJsonPath('data.is_available', true);
+
+        $this->assertDatabaseHas('technician_profiles', ['user_id' => $technician->id, 'trade' => 'Electrical', 'service_location' => 'Lagos', 'is_available' => true]);
     }
 
     public function test_evidence_is_only_visible_to_booking_participants_and_administrators(): void

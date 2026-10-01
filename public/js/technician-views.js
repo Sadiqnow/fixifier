@@ -42,7 +42,51 @@ function journeyOverview() {
         ['Ready for evidence', jobs.filter(j => ['confirmed','in_progress'].includes(j.status)).length, 'Work to record'],
         ['Recorded releases', money(releases.reduce((sum,j) => sum + Number(j.payment.amount_minor),0)), 'Recorded gross amount'],
     ];
-    return `<div class="grid stats">${stats.map(([title,value,note]) => `<div class="card metric"><span>${title}</span><strong>${value}</strong><small>${note}</small></div>`).join('')}</div><div class="grid split">${journeyList('Jobs needing attention',active.slice(0,4))}<aside class="stack">${panel('Profile status',detailRow('Verification',readable(profile?.kyc_status || 'not_submitted')) + detailRow('Availability',profile?.is_available ? 'Available' : 'Unavailable') + '<button class="btn" data-section="profile">View profile</button>')}${panel('Recent bookings',jobs.slice(0,4).map(j => `<div class="item"><strong>${esc(j.reference)}</strong><p>${esc(journeyLabels[j.status])} · ${esc(when(j.updated_at))}</p></div>`).join('') || empty('No activity yet'))}${notice('Customer approval and payment release are separate events. Demo-provider payment records do not represent real transfers.')}</aside></div>`;
+    return `<div class="grid stats">${stats.map(([title,value,note]) => `<div class="card metric"><span>${title}</span><strong>${value}</strong><small>${note}</small></div>`).join('')}</div><div class="grid split">${journeyList('Jobs needing attention',active.slice(0,4))}<aside class="stack">${panel('Profile status',detailRow('Verification',readable(profile?.kyc_status || 'not_submitted')) + detailRow('Availability',profile?.is_available ? 'Available' : 'Unavailable') + '<div class="actions"><button class="btn" data-section="profile">View profile</button><button class="btn sm" data-profile-edit>Edit details</button></div>')}${panel('Recent bookings',jobs.slice(0,4).map(j => `<div class="item"><strong>${esc(j.reference)}</strong><p>${esc(journeyLabels[j.status])} · ${esc(when(j.updated_at))}</p></div>`).join('') || empty('No activity yet'))}${notice('Customer approval and payment release are separate events. Demo-provider payment records do not represent real transfers.')}</aside></div>`;
+}
+async function openProfileEditor() {
+    const directory = await api('/technicians');
+    const tradeOptions = directory.categories.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join('');
+    const areaOptions = directory.areas.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join('');
+    const formHtml = `
+        <form id="profileEditorForm">
+            <label class="field">Trade<select name="trade">${tradeOptions}</select></label>
+            <label class="field">Service area<select name="service_location">${areaOptions}</select></label>
+            <label class="field">Availability<select name="is_available"><option value="1">Available</option><option value="0">Unavailable</option></select></label>
+            <label class="field">Professional description<textarea name="bio" required maxlength="5000">${esc(profile?.bio || '')}</textarea></label>
+            <label class="field">Skills<textarea name="skills" required maxlength="2000">${esc(profile?.skills || '')}</textarea></label>
+            <label class="field">Years of experience<input name="years_experience" type="number" min="0" max="80" value="${Number(profile?.years_experience ?? 0)}" required></label>
+            <label class="field">Indicative price (kobo)<input name="indicative_price_minor" type="number" min="0" value="${profile?.indicative_price_minor ?? ''}" step="1"></label>
+            <label class="field">Availability notes<textarea name="availability_notes" maxlength="2000">${esc(profile?.availability_notes || '')}</textarea></label>
+            <button class="btn" type="submit">Save profile</button>
+        </form>
+    `;
+    modal('Edit profile', formHtml);
+    const form = $('profileEditorForm');
+    form.querySelector('[name="trade"]').value = profile?.trade || '';
+    form.querySelector('[name="service_location"]').value = profile?.service_location || '';
+    form.querySelector('[name="is_available"]').value = profile?.is_available ? '1' : '0';
+    form.onsubmit = async e => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(form));
+        const payload = {
+            trade: data.trade,
+            service_location: data.service_location,
+            bio: data.bio,
+            skills: data.skills,
+            years_experience: Number(data.years_experience),
+            indicative_price_minor: data.indicative_price_minor === '' ? null : Number(data.indicative_price_minor),
+            is_available: data.is_available === '1',
+            availability_notes: data.availability_notes || null,
+        };
+        await api('/technician/profile', 'PUT', payload);
+        const refreshed = await api('/me');
+        profile = refreshed.technician_profile;
+        closeModal();
+        toast('Profile saved.');
+        await loadIdentity();
+        render();
+    };
 }
 function journeyProfile(verificationOnly) {
     const status = profile?.kyc_status || 'not_submitted';
@@ -53,8 +97,8 @@ function journeyProfile(verificationOnly) {
         (verificationOnly ? detailRow('Verified at',profile?.verified_at ? when(profile.verified_at) : 'Not verified') :
             detailRow('Experience',`${profile?.years_experience ?? 0} years`) + detailRow('Availability',profile?.is_available ? 'Available' : 'Unavailable') + `<p class="muted">${esc(profile?.bio || 'No biography recorded.')}</p>`));
     return `<div class="grid split">${summary}<aside class="stack">${panel(verificationOnly ? 'Private documents' : 'Profile updates',
-        notice(verificationOnly ? 'Document upload is not available in this portal yet. Your current review status is shown here; contact the administrator for assistance.' : 'Profile and availability editing are not available in this portal yet. Contact the administrator to update your details.') +
-        `<div class="actions"><button class="btn" disabled>${verificationOnly ? 'Upload documents' : 'Save profile'}</button></div>`)}${notice('New assignments require an approved, active and available technician profile.')}</aside></div>`;
+        notice(verificationOnly ? 'Document upload is not available in this portal yet. Your current review status is shown here; contact the administrator for assistance.' : 'Keep your trade, service area, and availability current so customer requests match your profile correctly.') +
+        `<div class="actions"><button class="btn" ${verificationOnly ? 'disabled' : ''} data-profile-edit>${verificationOnly ? 'Upload documents' : 'Edit profile'}</button></div>`)}${notice('New assignments require an approved, active and available technician profile.')}</aside></div>`;
 }
 function journeyEarnings() {
     const payments = jobs.filter(j => j.payment);
@@ -113,4 +157,6 @@ document.addEventListener('click', event => {
     if (sectionButton) go(sectionButton.dataset.section);
     const filterButton = event.target.closest('[data-filter]');
     if (filterButton) { jobFilter = filterButton.dataset.filter; render(); }
+    const profileEditButton = event.target.closest('[data-profile-edit]');
+    if (profileEditButton && !profileEditButton.disabled) openProfileEditor();
 });
