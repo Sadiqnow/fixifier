@@ -60,6 +60,8 @@ class BookingController extends Controller
             }
             $booking = Booking::create($data + ['reference' => 'FX-'.now()->format('ymd').'-'.Str::upper(Str::random(6)),
                 'customer_id' => $r->user()->id, 'status' => BookingStatus::Requested]);
+            \App\Services\Journey::round($booking);
+            \App\Services\Journey::record($booking, 'request.created', 'New service request.');
             Audit::record('booking.created', $booking);
 
             return $booking;
@@ -73,6 +75,12 @@ class BookingController extends Controller
         $user = $r->user();
         abort_unless($user->role->value === 'admin' || $booking->customer_id === $user->id || $booking->technician_id === $user->id, 403);
 
+        $booking->setAttribute('quote_versions', \App\Models\Quotation::where('booking_id', $booking->id)->orderBy('version')->get());
+        foreach (['work_rounds', 'booking_updates', 'booking_attachments'] as $table) {
+            $rows = DB::table($table)->where('booking_id', $booking->id)->orderBy('id')->get();
+            if ($table === 'booking_attachments') $rows->each(function ($row) { unset($row->storage_path); });
+            $booking->setAttribute($table, $rows);
+        }
         return response()->json(['data' => $booking->load(['customer', 'technician', 'quotation', 'evidence', 'dispute', 'disputes', 'payment', 'review'])]);
     }
 }

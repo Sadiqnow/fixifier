@@ -11,6 +11,7 @@ use App\Models\JobEvidence;
 use App\Models\Quotation;
 use App\Models\Review;
 use App\Services\Audit;
+use App\Services\Journey;
 use App\Services\DisputeResolution;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +25,13 @@ class WorkflowController extends Controller
     {
         $quote = DB::transaction(function () use ($r, $b) {
             $booking = $this->technicianBookingForUpdate($r, $b, BookingStatus::Requested);
-            $q = Quotation::updateOrCreate(['booking_id' => $booking->id], $r->validated());
+            abort_unless($booking->request_accepted_at, 422, 'Accept the incoming request before quoting.');
+            $data = $r->validated();
+            $data['amount_minor'] = collect($data['items'])->sum(fn ($i) => $i['quantity'] * $i['unit_price_minor']);
+            abort_unless($data['amount_minor'] >= 100 && $data['amount_minor'] <= 1000000000, 422, 'Invalid quotation total.');
+            $data['version'] = (int) Quotation::where('booking_id', $booking->id)->max('version') + 1;
+            $q = Quotation::create($data + ['booking_id' => $booking->id]);
+            Journey::record($booking, 'quotation.submitted', 'Quotation version '.$q->version.' is ready for review.');
             $booking->update(['status' => BookingStatus::Quoted, 'lock_version' => $booking->lock_version + 1]);
             Audit::record('quotation.submitted', $q);
 
@@ -39,6 +46,8 @@ class WorkflowController extends Controller
         $booking = DB::transaction(function () use ($r, $b) {
             $booking = $this->customerBookingForUpdate($r, $b, BookingStatus::Quoted);
             $quote = $booking->quotation()->lockForUpdate()->firstOrFail();
+            $data = $r->validate(['quotation_id' => 'required|integer']);
+            abort_unless((int) $data['quotation_id'] === $quote->id, 409, 'The quotation changed. Review the current version.');
             if ($quote->expires_at->lessThanOrEqualTo(now())) {
                 $this->conflict($booking, 'quote_expired', 'This quotation has expired.');
             }
@@ -46,7 +55,9 @@ class WorkflowController extends Controller
                 $this->conflict($booking, 'invalid_transition', 'This quotation has already been accepted.');
             }
             $quote->update(['accepted_at' => now()]);
-            $booking->update(['status' => BookingStatus::Confirmed, 'lock_version' => $booking->lock_version + 1]);
+            $booking->update(['accepted_quotation_id' => $quote->id, 'status' => BookingStatus::Confirmed, 'lock_version' => $booking->lock_version + 1]);
+            Journey::round($booking);
+            Journey::record($booking, 'quotation.accepted', 'Customer accepted quotation version '.$quote->version.'.');
             Audit::record('quotation.accepted', $booking);
 
             return $booking;
@@ -59,8 +70,11 @@ class WorkflowController extends Controller
     {
         $booking = DB::transaction(function () use ($r, $b) {
             $booking = $this->technicianBookingForUpdate($r, $b, BookingStatus::Confirmed);
+            app(\App\Services\JourneyPayments::class)->requireFunding($booking);
             abort_unless($booking->evidence()->where('work_round', $booking->current_work_round)->where('type', 'before')->exists(), 422, 'Upload before evidence for the current work round before starting.');
             $booking->update(['status' => BookingStatus::InProgress, 'lock_version' => $booking->lock_version + 1]);
+            Journey::updateRound($booking, ['started_at' => now()]);
+            Journey::record($booking, 'work.started', 'Work has started.');
             Audit::record('booking.started', $booking, ['work_round' => $booking->current_work_round]);
 
             return $booking;
@@ -110,9 +124,12 @@ class WorkflowController extends Controller
     {
         $booking = DB::transaction(function () use ($r, $b) {
             $booking = $this->technicianBookingForUpdate($r, $b, BookingStatus::InProgress);
+            $data = $r->validate(['completion_notes' => 'required|string|min:10|max:5000']);
             $types = $booking->evidence()->where('work_round', $booking->current_work_round)->distinct()->pluck('type');
             abort_unless($types->contains('before') && $types->contains('after'), 422, 'Before and after evidence for this work round are both required.');
             $booking->update(['status' => BookingStatus::EvidenceSubmitted, 'lock_version' => $booking->lock_version + 1]);
+            Journey::updateRound($booking, ['completion_notes' => $data['completion_notes'], 'submitted_at' => now()]);
+            Journey::record($booking, 'work.submitted', 'Completion is ready for customer review.');
             Audit::record('evidence.submitted', $booking, ['work_round' => $booking->current_work_round]);
 
             return $booking;
@@ -127,6 +144,8 @@ class WorkflowController extends Controller
             $booking = $this->customerBookingForUpdate($r, $b, BookingStatus::EvidenceSubmitted);
             $booking->update(['status' => BookingStatus::Completed, 'settlement_status' => 'release_pending', 'release_approved_at' => now(), 'lock_version' => $booking->lock_version + 1]);
             $booking->payment()->where('status', 'authorized')->update(['status' => 'release_pending']);
+            Journey::updateRound($booking, ['review' => 'approved', 'reviewed_at' => now()]);
+            Journey::record($booking, 'work.approved', 'Customer approved completion. Settlement is pending provider confirmation.');
             Audit::record('booking.approved', $booking, ['work_round' => $booking->current_work_round]);
 
             return $booking;
@@ -145,6 +164,8 @@ class WorkflowController extends Controller
             }
             $booking->update(['status' => BookingStatus::Disputed, 'lock_version' => $booking->lock_version + 1]);
             $dispute = Dispute::create($data + ['booking_id' => $booking->id, 'opened_by' => $r->user()->id, 'status' => 'open', 'work_round' => $booking->current_work_round]);
+            Journey::updateRound($booking, ['review' => 'disputed', 'reviewed_at' => now()]);
+            Journey::record($booking, 'dispute.opened', $data['reason'], ['dispute_id' => $dispute->id]);
             Audit::record('dispute.opened', $dispute, ['booking_id' => $booking->id, 'work_round' => $booking->current_work_round]);
 
             return $dispute;

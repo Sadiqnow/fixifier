@@ -47,6 +47,11 @@ class ActionController extends Controller
             $p->verified_at = $data['decision'] === 'approved' ? now() : null;
             $p->verification_version++;
             $p->save();
+            foreach ($technician->documents()->where('status', 'pending')->get() as $document) {
+                $document->update(['status' => $data['decision']]);
+                DB::table('kyc_decisions')->insert(['kyc_document_id' => $document->id, 'reviewer_id' => $request->user()->id, 'status' => $data['decision'], 'reason' => $data['reason'], 'created_at' => now()]);
+            }
+            DB::table('journey_notifications')->insert(['user_id' => $technician->id, 'type' => 'verification.decided', 'body' => $data['decision'].': '.$data['reason'], 'created_at' => now()]);
             TechnicianDecision::create(['technician_profile_id' => $p->id, 'reviewer_id' => $request->user()->id,
                 'from_status' => $from, 'to_status' => $data['decision'], 'reason' => $data['reason'], 'created_at' => now()]);
             Audit::record('technician.verification_decided', $p, ['decision' => $data['decision'], 'reason' => $data['reason']]);
@@ -70,7 +75,7 @@ class ActionController extends Controller
                 || ($b->service_area && mb_strtolower(trim($b->service_area)) !== mb_strtolower(trim($data['service_area'])))) {
                 throw ValidationException::withMessages(['technician_id' => 'Choose an approved, active, available technician matching the category and confirmed service area.']);
             }
-            $b->update(['technician_id' => $tech->id, 'service_area' => $tech->technicianProfile->service_location, 'lock_version' => $b->lock_version + 1]);
+            $b->update(['technician_id' => $tech->id, 'request_accepted_at' => null, 'service_area' => $tech->technicianProfile->service_location, 'lock_version' => $b->lock_version + 1]);
             Audit::record('booking.assigned', $b, ['technician_id' => $tech->id, 'service_area' => $b->service_area, 'reason' => $data['reason']]);
         }, 3);
 
@@ -102,7 +107,7 @@ class ActionController extends Controller
             $this->unpaidRequest($b);
             abort_unless($requeue ? $b->technician_id !== null : $b->technician_id === null, 409);
             $previous = $b->technician_id;
-            $b->update(['technician_id' => null, 'status' => $requeue ? BookingStatus::Requested : BookingStatus::Cancelled, 'lock_version' => $b->lock_version + 1]);
+            $b->update(['technician_id' => null, 'request_accepted_at' => null, 'status' => $requeue ? BookingStatus::Requested : BookingStatus::Cancelled, 'lock_version' => $b->lock_version + 1]);
             Audit::record($requeue ? 'booking.requeued' : 'booking.closed', $b, ['previous_technician_id' => $previous, 'reason' => $data['reason']]);
         }, 3);
 

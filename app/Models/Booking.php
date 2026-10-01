@@ -27,7 +27,7 @@ class Booking extends Model
         return $this->hasOne(Review::class);
     }
 
-    protected $fillable = ['reference', 'customer_id', 'technician_id', 'service_category', 'description', 'address', 'scheduled_at', 'status', 'service_area', 'lock_version', 'current_work_round', 'settlement_status', 'release_approved_at'];
+    protected $fillable = ['reference', 'customer_id', 'technician_id', 'service_category', 'description', 'address', 'scheduled_at', 'status', 'service_area', 'lock_version', 'current_work_round', 'settlement_status', 'release_approved_at', 'request_accepted_at', 'visit_status', 'accepted_quotation_id'];
 
     protected function casts(): array
     {
@@ -46,7 +46,7 @@ class Booking extends Model
 
     public function quotation(): HasOne
     {
-        return $this->hasOne(Quotation::class);
+        return $this->hasOne(Quotation::class)->latestOfMany();
     }
 
     public function evidence(): HasMany

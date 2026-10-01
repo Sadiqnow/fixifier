@@ -19,11 +19,11 @@ class PortalController extends Controller
             ? DB::table('technician_profiles')->where('user_id', $request->user()->id)->first() : null]);
     }
 
-    public function technicians()
+    public function technicians(Request $request)
     {
-        $users = app(EligibilityService::class)->query()->with('technicianProfile')->orderBy('name')->get();
+        $users = app(EligibilityService::class)->query()->with('technicianProfile')->withCount(['assignedBookings as completed_work' => fn ($q) => $q->where('status', 'completed'), 'reviews' => fn ($q) => $q->where('status', 'published')])->withAvg(['reviews' => fn ($q) => $q->where('status', 'published')], 'stars')->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.mb_substr($request->input('search'), 0, 100).'%'))->orderBy('name')->get();
 
-        return response()->json(['data' => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'service_category' => $u->technicianProfile->trade, 'service_area' => $u->technicianProfile->service_location]),
+        return response()->json(['data' => $users->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'service_category' => $u->technicianProfile->trade, 'service_area' => $u->technicianProfile->service_location, 'profile' => $u->technicianProfile, 'completed_work' => $u->completed_work, 'rating' => $u->reviews_avg_stars, 'rating_count' => $u->reviews_count]),
             'categories' => Category::where('active', true)->orderBy('name')->pluck('name'),
             'areas' => ServiceArea::where('active', true)->orderBy('name')->pluck('name')]);
     }

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\V1\JourneyController;
+use App\Http\Controllers\Api\V1\JourneyPaymentController;
 use App\Http\Controllers\Api\V1\AdminPortalController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BookingController;
@@ -9,10 +11,26 @@ use App\Http\Middleware\EnsureActiveAccount;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+    Route::post('/payments/paystack/webhook', [JourneyPaymentController::class, 'webhook']);
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::middleware(['auth:sanctum', EnsureActiveAccount::class])->group(function () {
         Route::get('/admin/dashboard', [AdminPortalController::class, 'index']);
+        Route::put('/technician/profile', [JourneyController::class, 'profile']);
+        Route::get('/technician/documents', [JourneyController::class, 'documents']);
+        Route::post('/technician/documents', [JourneyController::class, 'submitDocument']);
+        Route::get('/documents/{document}', [JourneyController::class, 'document']);
+        Route::get('/notifications', [JourneyController::class, 'notifications']);
+        Route::post('/notifications/{id}/read', [JourneyController::class, 'readNotification']);
+        Route::post('/bookings/{b}/journey/{action}', [JourneyController::class, 'act']);
+        Route::post('/bookings/{b}/attachments', [JourneyController::class, 'upload']);
+        Route::get('/attachments/{id}', [JourneyController::class, 'attachment']);
+        Route::post('/bookings/{b}/payments', [JourneyPaymentController::class, 'initialize']);
+        Route::post('/bookings/{b}/payments/reconcile', [JourneyPaymentController::class, 'reconcile']);
+        Route::post('/bookings/{b}/settlement', [JourneyPaymentController::class, 'settle']);
+        Route::post('/bookings/{b}/settlement/reconcile', [JourneyPaymentController::class, 'settlement']);
+        Route::put('/technician/payout-destination', [JourneyPaymentController::class, 'destination']);
+        Route::get('/technician/earnings', [JourneyPaymentController::class, 'earnings']);
         Route::get('/me', [PortalController::class, 'me']);
         Route::get('/technicians', [PortalController::class, 'technicians']);
         Route::get('/evidence/{evidence}', [PortalController::class, 'evidence']);

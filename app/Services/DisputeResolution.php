@@ -39,6 +39,8 @@ class DisputeResolution
                 $booking->payment()->where('status', 'authorized')->update(['status' => $booking->settlement_status]);
             }
             $booking->save();
+            if ($decision === 'rework') Journey::updateRound($booking, ['dispute_id' => $dispute->id, 'corrective_work' => $reason]);
+            Journey::record($booking, 'dispute.'.$decision, $reason, ['dispute_id' => $dispute->id]);
             Audit::record('dispute.resolved', $dispute, ['booking_id' => $booking->id, 'work_round' => $dispute->work_round, 'decision' => $decision, 'reason' => $reason]);
 
             return $dispute;
