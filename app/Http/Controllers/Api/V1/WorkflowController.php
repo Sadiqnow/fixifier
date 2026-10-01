@@ -46,8 +46,10 @@ class WorkflowController extends Controller
         $booking = DB::transaction(function () use ($r, $b) {
             $booking = $this->customerBookingForUpdate($r, $b, BookingStatus::Quoted);
             $quote = $booking->quotation()->lockForUpdate()->firstOrFail();
-            $data = $r->validate(['quotation_id' => 'required|integer']);
-            abort_unless((int) $data['quotation_id'] === $quote->id, 409, 'The quotation changed. Review the current version.');
+            $data = $r->validate(['quotation_id' => 'nullable|integer']);
+            if (array_key_exists('quotation_id', $data) && $data['quotation_id'] !== null) {
+                abort_unless((int) $data['quotation_id'] === $quote->id, 409, 'The quotation changed. Review the current version.');
+            }
             if ($quote->expires_at->lessThanOrEqualTo(now())) {
                 $this->conflict($booking, 'quote_expired', 'This quotation has expired.');
             }
