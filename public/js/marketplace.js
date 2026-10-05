@@ -114,8 +114,35 @@
             const choices = (name,title,values) => `<div class="field"><label for="f-${name}">${escape(title)}</label><select id="f-${name}" name="${name}" required><option value="">Choose ${escape(title.toLowerCase())}</option>${values.map(v=>`<option value="${escape(v)}">${escape(v)}</option>`).join('')}</select></div>`;
             if (view !== 'book') return;
             $('#main').innerHTML = heading('Book a service','Describe the issue and request a quotation.') + `<div class="card"><form id="bookingForm" class="form two-col">${choices('service_category','Service category',directory.categories)}${choices('service_area','Service area',directory.areas)}<div class="field"><label for="f-technician">Technician</label><select id="f-technician" name="technician_id"><option value="">Let the admin assign a technician</option>${technicians.map(t => `<option value="${t.id}">${escape(t.name)} · ${escape(t.service_category)} · ${escape(t.service_area)}</option>`).join('')}</select></div>${area('description','What needs repair?')}${field('address','Service address','text','maxlength="1000"')}${field('scheduled_at','Preferred date and time','datetime-local')}<p class="meta span2">Choose a matching technician, or send the request for admin assignment.</p><p id="bookingError" class="notice hidden span2" role="alert"></p><button class="btn" ${directory.categories.length && directory.areas.length ? '' : 'disabled'}>Request quotation</button></form></div>`;
+            $('#f-scheduled_at').parentElement.insertAdjacentHTML('afterend', '<div class="field span2"><label for="slotDate">Check technician availability</label><div class="row"><input id="slotDate" type="date"><button type="button" class="btn secondary" id="checkSlots">Find available times</button></div><p id="slotStatus" class="meta" role="status">Choose a technician and date to see available one-hour appointments.</p><div id="availableSlots" class="job-actions"></div></div>');
+            const slotDate = $('#slotDate'), slotStatus = $('#slotStatus'), slotOptions = $('#availableSlots'), checkSlots = $('#checkSlots');
+            let slotRequest = 0;
+            checkSlots.onclick = async () => {
+                const technicianId = $('#f-technician').value, date = slotDate.value;
+                if (!technicianId || !date) { slotStatus.textContent = 'Choose a technician and a date first.'; return; }
+                const request = ++slotRequest;
+                checkSlots.disabled = true; slotOptions.replaceChildren(); slotStatus.textContent = 'Checking availability…';
+                try {
+                    const {data} = await api(`/technicians/${encodeURIComponent(technicianId)}/slots?date=${encodeURIComponent(date)}`);
+                    if (request !== slotRequest || !slotOptions.isConnected) return;
+                    slotStatus.textContent = !data.configured ? 'This technician has not published working hours. You can still request a preferred appointment time.' : data.slots.length ? `Times shown in ${data.timezone}. Each appointment reserves one hour plus travel time. Availability is checked again when you submit.` : 'No available appointments on this date. Try another date.';
+                    for (const slot of data.slots) {
+                        const button = document.createElement('button'); button.type = 'button'; button.className = 'btn secondary small';
+                        button.textContent = new Date(slot.starts_at).toLocaleTimeString('en-NG', {timeZone:data.timezone, hour:'2-digit', minute:'2-digit'});
+                        button.onclick = () => {
+                            const start = new Date(slot.starts_at);
+                            $('#f-scheduled_at').value = new Date(start.getTime() - start.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+                            slotStatus.textContent = `Selected ${start.toLocaleString()}. The preferred appointment field uses your device’s timezone.`;
+                        };
+                        slotOptions.append(button);
+                    }
+                } catch (error) { if (request === slotRequest && slotStatus.isConnected) slotStatus.textContent = error.message; }
+                finally { if (request === slotRequest) checkSlots.disabled = false; }
+            };
+            const resetSlots = () => { slotRequest++; checkSlots.disabled = false; slotOptions.replaceChildren(); slotStatus.textContent = 'Find available times for the selected technician and date.'; };
+            slotDate.onchange = resetSlots;
             $('#bookingForm').onsubmit = async event => {
-                event.preventDefault(); const button = event.currentTarget.querySelector('button'); button.disabled = true;
+                event.preventDefault(); const button = event.currentTarget.querySelector('button:not([type="button"])'); button.disabled = true;
                 const data = Object.fromEntries(new FormData(event.currentTarget)); data.scheduled_at = new Date(data.scheduled_at).toISOString();
                 try { await api('/bookings',{method:'POST',body:data}); view = 'jobs'; page = 1; await refresh(); toast('Quotation requested.'); }
                 catch (error) { $('#bookingError').textContent = error.message; $('#bookingError').classList.remove('hidden'); button.disabled = false; }
@@ -123,6 +150,7 @@
             const service = query.get('service') || '';
             $('#f-service_category').value = directory.categories.find(c=>c.toLowerCase().startsWith(service.toLowerCase())) || '';
             $('#f-technician').onchange = event => {
+                resetSlots();
                 const tech = technicians.find(t=>Number(t.id)===Number(event.target.value));
                 if (tech) { $('#f-service_category').value=tech.service_category; $('#f-service_area').value=tech.service_area; }
             };

@@ -31,7 +31,7 @@ class Booking extends Model
 
     protected function casts(): array
     {
-        return ['lock_version' => 'integer', 'current_work_round' => 'integer', 'release_approved_at' => 'datetime', 'status' => BookingStatus::class, 'scheduled_at' => 'datetime'];
+        return ['lock_version' => 'integer', 'current_work_round' => 'integer', 'release_approved_at' => 'datetime', 'status' => BookingStatus::class, 'scheduled_at' => 'datetime', 'scheduled_end_at' => 'datetime', 'travel_buffer_minutes' => 'integer'];
     }
 
     public function customer(): BelongsTo

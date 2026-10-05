@@ -29,6 +29,7 @@ class WorkflowController extends Controller
             $data = $r->validated();
             $data['amount_minor'] = collect($data['items'])->sum(fn ($i) => $i['quantity'] * $i['unit_price_minor']);
             abort_unless($data['amount_minor'] >= 100 && $data['amount_minor'] <= 1000000000, 422, 'Invalid quotation total.');
+            app(\App\Services\TechnicianAvailabilityService::class)->resize($booking, $data['duration_minutes']);
             $data['version'] = (int) Quotation::where('booking_id', $booking->id)->max('version') + 1;
             $q = Quotation::create($data + ['booking_id' => $booking->id]);
             Journey::record($booking, 'quotation.submitted', 'Quotation version '.$q->version.' is ready for review.');
@@ -97,7 +98,7 @@ class WorkflowController extends Controller
                 }
                 // Existing jobs may already be in progress without a before record.
                 // New starts always require before evidence; supplemental records retain capture times.
-                $allowed = $booking->status === BookingStatus::Confirmed ? 'before' : 'before,after';
+                $allowed = $booking->status === BookingStatus::Confirmed ? 'before' : 'before,during,after';
                 $data = $r->validate(['type' => 'required|in:'.$allowed, 'photo' => 'required|image|mimes:jpg,jpeg,png,webp|max:10240',
                     'note' => 'nullable|string|max:2000', 'captured_at' => 'required|date|before_or_equal:now']);
                 $phase = $data['type'];

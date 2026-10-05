@@ -9,7 +9,8 @@
     <meta name="verification-url" content="{{ route('job.verification') }}">
     <title>Fixifier Plus · Technician portal</title>
     <link rel="stylesheet" href="{{ asset('css/technician.css') }}?v=journey-1">
-    <script src="{{ asset('js/technician-views.js') }}?v=journey-1" defer></script>
+    <script src="{{ asset('js/technician-views.js') }}?v=profile-save-2" defer></script>
+    <script src="{{ asset('js/technician-schedule.js') }}?v=schedule-1" defer></script>
     <script src="{{ asset('js/technician.js') }}?v=journey-1" defer></script>
 </head>
 <body>
@@ -19,6 +20,7 @@
         <div>
             <div class="sidehead">Technician</div>
             <nav class="nav" id="nav" aria-label="Workspace sections">
+                <button type="button" data-page="schedule"><span class="icon" aria-hidden="true">◷</span>Schedule &amp; availability</button>
                 @foreach ([['overview','▦','Overview'],['requests','◫','Incoming requests'],['jobs','⚒','My jobs'],['quotes','▤','Quotes'],['evidence','◉','Work evidence'],['disputes','⚑','Disputes & rework'],['earnings','⇄','Earnings & payouts'],['verification','✓','Verification'],['profile','◌','Profile & availability'],['flow','≡','Process flow']] as [$page, $icon, $label])
                     <button type="button" data-page="{{ $page }}"><span class="icon" aria-hidden="true">{{ $icon }}</span>{{ $label }}</button>
                 @endforeach
@@ -50,6 +52,7 @@
     </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+@include('partials.journey', ['journeyBase' => url('/api/v1')])
 <noscript><p class="notice">Enable JavaScript to sign in and manage your technician jobs.</p></noscript>
 </body>
 </html>

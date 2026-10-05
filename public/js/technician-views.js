@@ -3,6 +3,7 @@
 const journeySections = {
     overview: ['Professional workspace', 'Overview', 'Review new requests and move assigned work forward.'],
     requests: ['Step 01 · Assignment', 'Incoming requests', 'Review the problem, location and preferred time before sending a quotation.'],
+    schedule: ['Operational availability', 'Schedule & availability', 'Manage recurring hours, blocked time and scheduled appointments.'],
     jobs: ['Service work', 'My jobs', 'Open an assignment to review its details and available actions.'],
     quotes: ['Step 02 · Pricing', 'Quotes', 'Set a clear scope, amount and expiry for the assigned customer.'],
     evidence: ['Step 03 · Execution', 'Work evidence', 'Record before evidence, start work, then submit after evidence for the current round.'],
@@ -25,7 +26,7 @@ function journeyBadge(job) {
     return `<span class="badge ${color}">${esc(journeyLabels[job.status] || readable(job.status))}</span>`;
 }
 function journeyCard(job) {
-    let actions = button('Open job', 'details', job.id);
+    let actions = button('Open job', 'details', job.id) + `<button class="btn sm" data-journey-id="${Number(job.id)}">Full job workspace</button>`;
     if (job.status === 'requested') actions += button('Send quotation', 'quote', job.id);
     if (job.status === 'confirmed') actions += button('Record before evidence', 'upload', job.id) + button('Start work', 'start', job.id);
     if (job.status === 'in_progress') actions += button('Upload evidence', 'upload', job.id) + button('Submit completion', 'submit', job.id);
@@ -50,15 +51,16 @@ async function openProfileEditor() {
     const areaOptions = directory.areas.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join('');
     const formHtml = `
         <form id="profileEditorForm">
-            <label class="field">Trade<select name="trade">${tradeOptions}</select></label>
-            <label class="field">Service area<select name="service_location">${areaOptions}</select></label>
+            <label class="field">Trade<select name="trade" required><option value="">Choose a trade</option>${tradeOptions}</select></label>
+            <label class="field">Service area<select name="service_location" required><option value="">Choose a service area</option>${areaOptions}</select></label>
             <label class="field">Availability<select name="is_available"><option value="1">Available</option><option value="0">Unavailable</option></select></label>
-            <label class="field">Professional description<textarea name="bio" required maxlength="5000">${esc(profile?.bio || '')}</textarea></label>
+            <label class="field">Professional description (at least 20 characters)<textarea name="bio" required minlength="20" maxlength="5000">${esc(profile?.bio || '')}</textarea></label>
             <label class="field">Skills<textarea name="skills" required maxlength="2000">${esc(profile?.skills || '')}</textarea></label>
             <label class="field">Years of experience<input name="years_experience" type="number" min="0" max="80" value="${Number(profile?.years_experience ?? 0)}" required></label>
-            <label class="field">Indicative price (kobo)<input name="indicative_price_minor" type="number" min="0" value="${profile?.indicative_price_minor ?? ''}" step="1"></label>
+            <label class="field">Indicative price (kobo)<input name="indicative_price_minor" type="number" min="0" max="100000000" value="${esc(profile?.indicative_price_minor ?? profile?.starting_price_minor ?? '')}" step="1"></label>
             <label class="field">Availability notes<textarea name="availability_notes" maxlength="2000">${esc(profile?.availability_notes || '')}</textarea></label>
-            <button class="btn" type="submit">Save profile</button>
+            <p id="profileSaveError" role="alert" tabindex="-1"></p>
+            <button class="btn primary" type="submit">Save profile</button>
         </form>
     `;
     modal('Edit profile', formHtml);
@@ -68,6 +70,12 @@ async function openProfileEditor() {
     form.querySelector('[name="is_available"]').value = profile?.is_available ? '1' : '0';
     form.onsubmit = async e => {
         e.preventDefault();
+        const saveButton = form.querySelector('[type="submit"]');
+        if (saveButton.disabled) return;
+        saveButton.disabled = true;
+        saveButton.textContent = 'Saving…';
+        $('profileSaveError').textContent = '';
+        try {
         const data = Object.fromEntries(new FormData(form));
         const payload = {
             trade: data.trade,
@@ -79,26 +87,32 @@ async function openProfileEditor() {
             is_available: data.is_available === '1',
             availability_notes: data.availability_notes || null,
         };
-        await api('/technician/profile', 'PUT', payload);
-        const refreshed = await api('/me');
-        profile = refreshed.technician_profile;
+        const saved = await api('/technician/profile', 'PUT', payload);
+        profile = saved.data;
+        $('topTrade').textContent = profile.trade;
         closeModal();
         toast('Profile saved.');
-        await loadIdentity();
         render();
+        } catch (error) {
+            $('profileSaveError').textContent = error.message || 'Unable to save your profile. Please try again.';
+            $('profileSaveError').focus();
+        } finally {
+            saveButton.disabled = false;
+            saveButton.textContent = 'Save profile';
+        }
     };
 }
 function journeyProfile(verificationOnly) {
     const status = profile?.kyc_status || 'not_submitted';
     const summary = panel(verificationOnly ? 'Identity verification' : user.name,
-        `<span class="badge ${status === 'approved' ? 'green' : 'orange'}">${esc(readable(status))}</span>` +
+        `<span class="badge ${['approved','verified'].includes(status) ? 'green' : 'orange'}">${esc(readable(status))}</span>` +
         detailRow('Email',user.email) + detailRow('Phone',user.phone || 'Not recorded') +
         detailRow('Trade',profile?.trade || 'Not submitted') + detailRow('Service area',profile?.service_location || 'Not recorded') +
         (verificationOnly ? detailRow('Verified at',profile?.verified_at ? when(profile.verified_at) : 'Not verified') :
             detailRow('Experience',`${profile?.years_experience ?? 0} years`) + detailRow('Availability',profile?.is_available ? 'Available' : 'Unavailable') + `<p class="muted">${esc(profile?.bio || 'No biography recorded.')}</p>`));
     return `<div class="grid split">${summary}<aside class="stack">${panel(verificationOnly ? 'Private documents' : 'Profile updates',
-        notice(verificationOnly ? 'Document upload is not available in this portal yet. Your current review status is shown here; contact the administrator for assistance.' : 'Keep your trade, service area, and availability current so customer requests match your profile correctly.') +
-        `<div class="actions"><button class="btn" ${verificationOnly ? 'disabled' : ''} data-profile-edit>${verificationOnly ? 'Upload documents' : 'Edit profile'}</button></div>`)}${notice('New assignments require an approved, active and available technician profile.')}</aside></div>`;
+        notice(verificationOnly ? 'Submit private documents and review their history. Approval and suspension decisions belong to the administrator.' : 'Keep your trade, service area, and availability current so customer requests match your profile correctly.') +
+        `<div class="actions"><button class="btn" ${verificationOnly ? 'data-journey-tool="documents"' : 'data-profile-edit'}>${verificationOnly ? 'Documents and review history' : 'Edit profile'}</button></div>`)}${notice('New assignments require an approved, active and available technician profile.')}</aside></div>`;
 }
 function journeyEarnings() {
     const payments = jobs.filter(j => j.payment);
@@ -107,9 +121,9 @@ function journeyEarnings() {
 }
 function journeyFlow() {
     const stages = [
-        ['Onboarding','Register as a technician. Profile editing and document submission in this portal are not available yet.'],
+        ['Onboarding','Save your professional profile and submit private verification documents from this portal.'],
         ['Approval','Admin reviews eligibility. Only approved, active and available technicians can receive new assignments.'],
-        ['Assignment','Review an assigned request. Separate accept and decline actions are not available in this portal.'],
+        ['Assignment','Open the job workspace to review, accept or decline an assigned request.'],
         ['Quote','Send an amount, scope and future expiry. The customer accepts the quotation.'],
         ['Confirmation','Wait for the booking to be confirmed. Payment records may use the demo provider.'],
         ['Before evidence','Upload private before-work evidence for the current work round.'],
@@ -131,6 +145,7 @@ function renderJourney() {
     });
     let body;
     if (section === 'overview') body = journeyOverview();
+    else if (section === 'schedule') body = renderSchedule();
     else if (section === 'profile' || section === 'verification') body = journeyProfile(section === 'verification');
     else if (section === 'earnings') body = journeyEarnings();
     else if (section === 'flow') body = journeyFlow();
@@ -146,10 +161,10 @@ function renderJourney() {
             filters = `<div class="tabs" aria-label="Filter jobs">${[['all','All'],...Object.entries(journeyLabels)].map(([value,label]) => `<button data-filter="${value}" class="${jobFilter === value ? 'active' : ''}" aria-pressed="${jobFilter === value}">${label}</button>`).join('')}</div>`;
         }
         body = filters + journeyList(title, records);
-        if (section === 'requests') body += `<div class="status-summary"></div>` + notice('Send a quotation to respond to an assigned request. For reassignment, contact the administrator; accept and decline controls are not available yet.');
+        if (section === 'requests') body += `<div class="status-summary"></div>` + notice('Open the job workspace to accept or decline a request. Accept the request before submitting a quotation.');
         if (section === 'disputes') body += `<div class="status-summary"></div>` + notice('Open a job to read dispute details. Only the administrator can decide rework, release or refund.');
     }
-    const recordsPage = !['profile','verification','flow'].includes(section);
+    const recordsPage = !['profile','verification','flow','schedule'].includes(section);
     $('content').innerHTML = `<div class="head"><div><div class="eyebrow">${eyebrow}</div><h1>${section === 'overview' ? `Welcome, ${esc(user.name)}` : title}</h1><p>${description}</p></div>${button('Refresh','refresh',0)}</div>${recordsPage ? '<p class="muted small">Records, filters and totals reflect the current booking page.</p>' : ''}${body}${recordsPage ? `<div class="actions pager"><button class="btn" data-action="previous" ${page <= 1 ? 'disabled' : ''}>Previous</button><span>Page ${page} of ${last}</span><button class="btn" data-action="next" ${page >= last ? 'disabled' : ''}>Next</button></div>` : ''}`;
 }
 document.addEventListener('click', event => {
@@ -158,5 +173,5 @@ document.addEventListener('click', event => {
     const filterButton = event.target.closest('[data-filter]');
     if (filterButton) { jobFilter = filterButton.dataset.filter; render(); }
     const profileEditButton = event.target.closest('[data-profile-edit]');
-    if (profileEditButton && !profileEditButton.disabled) openProfileEditor();
+    if (profileEditButton && !profileEditButton.disabled) openProfileEditor().catch(error => toast(error.message));
 });

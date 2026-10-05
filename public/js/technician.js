@@ -37,6 +37,7 @@ $('today').textContent=new Date().toLocaleDateString();
 $('logout').onclick=async()=>{try{await api('/auth/logout','POST');sessionStorage.removeItem('fixifier-token');location.replace(login);}catch(e){toast(e.message);}};
 function go(value) { if(!journeySections[value])return; section=value; location.hash=value; $('sidebar').classList.remove('open'); $('menu').setAttribute('aria-expanded','false'); render(); }
 window.addEventListener('hashchange',()=>{const value=location.hash.slice(1);if(journeySections[value]){section=value;render();}});
+window.addEventListener('journey-updated',async()=>{try{await loadIdentity();await load();if(section==='schedule')await refreshCalendar();}catch(error){toast(error.message);}});
 document.querySelectorAll('#nav button').forEach(button=>button.onclick=()=>go(button.dataset.page));
 async function load(targetPage=page) {
     const version=++loadVersion;
@@ -50,10 +51,18 @@ async function load(targetPage=page) {
 function button(title,action,id) { return `<button class="btn ${['quote','upload','submit'].includes(action) ? 'primary' : 'secondary'}" data-action="${action}" data-id="${id}">${title}</button>`; }
 function render() { renderJourney(); }
 function input(name,title,type,extra='') { return `<label class="field">${title}<input name="${name}" type="${type}" ${extra} required></label>`; }
+function quoteItemRow() {
+    return `<div class="quote-item formgrid"><label class="field">Type<select name="item_kind"><option value="labour">Labour</option><option value="materials">Materials / spare part</option><option value="charge">Transport / other charge</option></select></label>${input('item_description','Item description','text','maxlength="200"')}${input('item_quantity','Quantity','number','min="1" max="1000" step="1" value="1"')}${input('item_price','Unit price (₦)','number','min="0" max="1000000" step="0.01"')}<button type="button" class="btn sm" data-remove-quote-item>Remove item</button></div>`;
+}
+document.addEventListener('click',event=>{
+    if(event.target.closest('[data-add-quote-item]'))$('quoteItems').insertAdjacentHTML('beforeend',quoteItemRow());
+    const remove=event.target.closest('[data-remove-quote-item]');
+    if(remove && document.querySelectorAll('.quote-item').length>1)remove.closest('.quote-item').remove();
+});
 function form(title,html,submit) {
-    modal(title,`<form id="actionForm">${html}<p id="formError" role="alert"></p><button class="btn">Submit</button></form>`);
+    modal(title,`<form id="actionForm">${html}<p id="formError" role="alert"></p><button class="btn primary" type="submit">Submit</button></form>`);
     $('actionForm').onsubmit=async e=>{
-        e.preventDefault(); const button=e.currentTarget.querySelector('button');button.disabled=true;
+        e.preventDefault(); const button=e.currentTarget.querySelector('button[type="submit"]');if(button.disabled)return;button.disabled=true;
         try {await submit(new FormData(e.currentTarget));closeModal();toast('Saved successfully.');try{await load();}catch(error){toast('Saved, but refresh failed. '+error.message);}}
         catch(error){$('formError').textContent=error.message;}finally{button.disabled=false;}
     };
@@ -70,7 +79,9 @@ async function act(action,id) {
     if(action==='refresh'){await loadIdentity();return load();}
     if(action==='previous'||action==='next')return load(Math.max(1,Math.min(last,page+(action==='next'?1:-1))));
     if(action==='details')return details(id);
-    if(action==='quote')return form('Submit quotation',input('amount','Amount (₦)','number','min="100" step="0.01"')+'<label class="field">Scope of work<textarea name="scope" minlength="10" maxlength="5000" required></textarea></label>'+input('expires_at','Valid until','datetime-local'),data=>api(`/bookings/${id}/quotation`,'POST',{amount_minor:Math.round(Number(data.get('amount'))*100),currency:'NGN',scope:data.get('scope'),expires_at:new Date(data.get('expires_at')).toISOString()}));
+    if(action==='quote')return form('Submit quotation',
+        '<label class="field">Diagnosis / findings<textarea name="diagnosis" minlength="10" maxlength="5000" required></textarea></label><label class="field">Scope of work<textarea name="scope" minlength="10" maxlength="5000" required></textarea></label><label class="field">Exclusions (write None if applicable)<textarea name="exclusions" maxlength="5000" required></textarea></label>'+input('duration_minutes','Estimated duration (minutes)','number','min="1" max="43200" step="1"')+input('expires_at','Valid until','datetime-local')+`<h3>Quotation items</h3><div id="quoteItems">${quoteItemRow()}</div><button class="btn sm" type="button" data-add-quote-item>Add item</button>`,
+        data=>api(`/bookings/${id}/quotation`,'POST',{currency:'NGN',scope:data.get('scope'),diagnosis:data.get('diagnosis'),exclusions:data.get('exclusions'),duration_minutes:Number(data.get('duration_minutes')),expires_at:new Date(data.get('expires_at')).toISOString(),items:data.getAll('item_description').map((description,index)=>({description,kind:data.getAll('item_kind')[index],quantity:Number(data.getAll('item_quantity')[index]),unit_price_minor:Math.round(Number(data.getAll('item_price')[index])*100)}))}));
     if(action==='upload') {
         const job=(await api(`/bookings/${id}`)).data, stage=job.status==='confirmed' || !job.evidence.some(e=>e.type==='before' && e.work_round===job.current_work_round)?'before':'after';
         return form(`Upload ${stage} evidence · Round ${job.current_work_round}`,`<input type="hidden" name="type" value="${stage}">`+input('photo','Photo (JPEG, PNG or WebP, max 10 MB)','file','accept="image/jpeg,image/png,image/webp"')+'<label class="field">Notes<textarea name="note" maxlength="2000"></textarea></label><p class="notice">Before evidence is required before starting work. After evidence is captured during work.</p>',data=>{data.set('captured_at',new Date().toISOString());data.set('expected_work_round',job.current_work_round);return api(`/bookings/${id}/evidence`,'POST',data);});

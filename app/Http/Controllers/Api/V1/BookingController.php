@@ -57,9 +57,17 @@ class BookingController extends Controller
                     throw ValidationException::withMessages(['technician_id' => 'This technician is no longer eligible.']);
                 }
                 $data['service_area'] = $tech->technicianProfile->service_location;
+                if (!empty($data['scheduled_at'])) {
+                    app(\App\Services\TechnicianAvailabilityService::class)->assertBookable($tech, \Carbon\CarbonImmutable::parse($data['scheduled_at']), 60, 15);
+                }
             }
             $booking = Booking::create($data + ['reference' => 'FX-'.now()->format('ymd').'-'.Str::upper(Str::random(6)),
                 'customer_id' => $r->user()->id, 'status' => BookingStatus::Requested]);
+            if ($booking->scheduled_at) {
+                $booking->scheduled_end_at = $booking->scheduled_at->copy()->addHour();
+                $booking->travel_buffer_minutes = 15;
+                $booking->save();
+            }
             \App\Services\Journey::round($booking);
             \App\Services\Journey::record($booking, 'request.created', 'New service request.');
             Audit::record('booking.created', $booking);

@@ -16,6 +16,11 @@ class JourneyController extends Controller
     {
         abort_unless($r->user()->role->value === 'technician', 403);
 
+        foreach (['skills', 'indicative_price_minor', 'availability_notes'] as $column) {
+            abort_unless(Schema::hasColumn('technician_profiles', $column), 503,
+                'Profile storage is not ready. The administrator must apply the technician journey database upgrade.');
+        }
+
         $normalized = [
             'trade' => $r->input('trade', $r->input('category')),
             'service_location' => $r->input('service_location', $r->input('service_area', $r->input('city'))),
@@ -51,7 +56,7 @@ class JourneyController extends Controller
             $profileData['skills'] = $data['skills'];
         }
         if (Schema::hasColumn('technician_profiles', 'indicative_price_minor')) {
-            $profileData['indicative_price_minor'] = $data['indicative_price_minor'];
+            $profileData['indicative_price_minor'] = $data['indicative_price_minor'] ?? null;
         }
         if (Schema::hasColumn('technician_profiles', 'starting_price_minor')) {
             $profileData['starting_price_minor'] = $data['indicative_price_minor'] ?? null;
@@ -62,16 +67,19 @@ class JourneyController extends Controller
 
         $p = DB::transaction(function () use ($r, $profileData) {
             \App\Models\User::whereKey($r->user()->id)->lockForUpdate()->firstOrFail();
-            $p = TechnicianProfile::firstOrNew(['user_id' => $r->user()->id]);
+            $p = TechnicianProfile::where('user_id', $r->user()->id)->lockForUpdate()->first()
+                ?? new TechnicianProfile(['user_id' => $r->user()->id]);
             if ($p->exists && ($p->trade !== $profileData['trade'] || $p->service_location !== $profileData['service_location'])) {
-                $p->kyc_status = 'pending';
+                if ($p->kyc_status !== 'suspended') {
+                    $p->kyc_status = 'pending';
+                }
                 $p->verified_at = null;
                 if (Schema::hasColumn('technician_profiles', 'verification_version')) {
                     $p->verification_version = ($p->verification_version ?? 0) + 1;
                 }
             }
 
-            $p->fill(array_filter($profileData, fn ($value) => ! is_null($value)))->save();
+            $p->fill($profileData)->save();
             return $p;
         });
 
@@ -145,8 +153,8 @@ class JourneyController extends Controller
             } elseif ($action === 'schedule') {
                 Journey::participant($b, $r->user(), 'technician');
                 abort_unless($b->request_accepted_at && in_array($b->status, [BookingStatus::Requested, BookingStatus::Quoted, BookingStatus::Confirmed]), 409, 'Scheduling is unavailable at this stage.');
-                $data = $r->validate(['scheduled_at' => 'required|date|after:now', 'reason' => 'required|string|min:10|max:2000']);
-                $b->scheduled_at = $data['scheduled_at'];
+                $data = $r->validate(['scheduled_at' => 'required|date|after:now', 'duration_minutes' => 'nullable|integer|between:1,1440', 'travel_buffer_minutes' => 'nullable|integer|between:0,240', 'reason' => 'required|string|min:10|max:2000']);
+                app(\App\Services\TechnicianAvailabilityService::class)->book($b, $data['scheduled_at'], $data['duration_minutes'] ?? 60, $data['travel_buffer_minutes'] ?? 15);
                 $b->visit_status = 'scheduled';
                 Journey::updateRound($b, ['scheduled_at' => $b->scheduled_at]);
                 $body = $data['reason'];

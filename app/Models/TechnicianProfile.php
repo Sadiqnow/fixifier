@@ -10,7 +10,7 @@ class TechnicianProfile extends Model
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean', 'is_available' => 'boolean', 'verified_at' => 'datetime', 'verification_version' => 'integer'];
+        return ['is_active' => 'boolean', 'is_available' => 'boolean', 'verified_at' => 'datetime', 'verification_version' => 'integer', 'schedule_configured' => 'boolean', 'schedule_version' => 'integer'];
     }
 
     public function user()

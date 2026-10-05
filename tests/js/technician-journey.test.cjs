@@ -10,7 +10,7 @@ async function workspace(role = 'technician') {
         if (!elements.has(id)) {
             const classes = new Set();
             elements.set(id, {innerHTML:'',textContent:'',style:{},dataset:{},isConnected:true,
-                setAttribute(){},removeAttribute(){},focus(){},querySelectorAll(){return [];},
+                setAttribute(){},removeAttribute(){},focus(){},querySelectorAll(){return [];},querySelector(selector){return element(id+selector);},
                 classList:{add:c=>classes.add(c),remove:c=>classes.delete(c),contains:c=>classes.has(c),toggle(c){if(classes.has(c)){classes.delete(c);return false;}classes.add(c);return true;}}});
         }
         return elements.get(id);
@@ -26,7 +26,7 @@ async function workspace(role = 'technician') {
         location:{hash:'',replace(){}},window:{addEventListener(){}},setTimeout:()=>1,clearTimeout(){},
         fetch:async(url,options)=>{calls.push({url,options});return {ok:true,status:200,json:async()=>url.endsWith('/me')?{data:{id:9,name:'Test Technician',email:'test@example.test',role},technician_profile:{trade:'Plumbing',kyc_status:'approved',is_available:1}}:{data:bookings,current_page:1,last_page:2}};},
     });
-    for (const name of ['technician-views.js','technician.js']) vm.runInContext(readFileSync(resolve(__dirname,'../../public/js',name),'utf8'),context);
+    for (const name of ['technician-views.js','technician-schedule.js','technician.js']) vm.runInContext(readFileSync(resolve(__dirname,'../../public/js',name),'utf8'),context);
     await new Promise(setImmediate);
     return {context,elements,calls,run:code=>vm.runInContext(code,context)};
 }
@@ -78,11 +78,21 @@ test('quotation form converts naira to minor units and posts to the real API',as
     const app=await workspace();
     app.run('globalThis.writes=[];form=(title,html,submit)=>{globalThis.submitAction=submit;};api=async(path,method,body)=>writes.push({path,method,body});');
     await app.run("act('quote',1)");
-    await app.run("submitAction(new Map([['amount','1250.50'],['scope','Replace the damaged fitting'],['expires_at','2030-01-01T12:00']]))");
+    await app.run("globalThis.quoteData=new FormData();for(const [key,value] of [['item_price','1250.50'],['item_quantity','2'],['item_kind','labour'],['item_description','Repair fitting'],['diagnosis','The pipe joint is cracked'],['scope','Replace the damaged fitting'],['exclusions','None'],['duration_minutes','60'],['expires_at','2030-01-01T12:00']])quoteData.append(key,value);submitAction(quoteData)");
     const write=JSON.parse(app.run('JSON.stringify(writes[0])'));
     assert.equal(write.path,'/bookings/1/quotation');
-    assert.equal(write.body.amount_minor,125050);
+    assert.equal(write.body.items[0].unit_price_minor,125050);
+    assert.equal(write.body.items[0].quantity,2);
+    assert.equal(write.body.duration_minutes,60);
+    assert.equal(write.body.diagnosis,'The pipe joint is cracked');
     assert.equal(write.body.currency,'NGN');
+});
+
+test('calendar month boundaries and timezone date conversion are stable',async()=>{
+    const app=await workspace();
+    assert.equal(app.run("JSON.stringify(calendarRange('2030-12-15','month'))"),'["2030-12-01","2031-01-01"]');
+    app.run("calendarData={timezone:'Africa/Lagos'}");
+    assert.equal(app.run("scheduleDate('2030-01-07T23:30:00Z')"),'2030-01-08');
 });
 test('failed pagination leaves the current page and records intact',async()=>{
     const app=await workspace();
@@ -91,4 +101,34 @@ test('failed pagination leaves the current page and records intact',async()=>{
     await assert.rejects(app.run("act('next')"),/Network unavailable/);
     assert.equal(app.run('page'),1);
     assert.equal(app.elements.get('content').innerHTML,before);
+});
+
+test('profile save displays server errors and retains the form for retry',async()=>{
+    const app=await workspace();
+    app.run(`FormData=class {constructor(){return new Map([['trade','Electrical'],['service_location','Lagos'],['bio','Short'],['skills','Repairs'],['years_experience','2'],['indicative_price_minor',''],['is_available','0'],['availability_notes','']]);}};
+        api=async(path)=>{if(path==='/technicians')return {categories:['Electrical'],areas:['Lagos']};throw new Error('The bio field must be at least 20 characters.');};`);
+    await app.run('openProfileEditor()');
+    await app.elements.get('profileEditorForm').onsubmit({preventDefault(){}});
+    assert.match(app.elements.get('profileSaveError').textContent,/at least 20 characters/);
+    assert.equal(app.elements.get('profileEditorForm[type="submit"]').disabled,false);
+    assert.equal(app.elements.get('overlay').classList.contains('open'),true);
+});
+
+test('profile save posts form fields and uses the persisted response',async()=>{
+    const app=await workspace();
+    app.run(`FormData=class {constructor(){return new Map([['trade','Electrical'],['service_location','Lagos'],['bio','Experienced electrical technician'],['skills','Repairs'],['years_experience','2'],['indicative_price_minor',''],['is_available','0'],['availability_notes','']]);}};
+        globalThis.savedRequest=null;
+        api=async(path,method,data)=>{if(path==='/technicians')return {categories:['Electrical'],areas:['Lagos']};savedRequest={path,method,data};return {data:{...data,user_id:9,kyc_status:'pending'}};};`);
+    await app.run('openProfileEditor()');
+    await app.elements.get('profileEditorForm').onsubmit({preventDefault(){}});
+    const request=JSON.parse(app.run('JSON.stringify(savedRequest)'));
+    assert.equal(request.path,'/technician/profile');
+    assert.equal(request.method,'PUT');
+    assert.equal(request.data.is_available,false);
+    assert.equal(request.data.indicative_price_minor,null);
+    assert.equal(request.data.availability_notes,null);
+    assert.equal(app.run('profile.user_id'),9);
+    assert.equal(app.elements.get('topTrade').textContent,'Electrical');
+    assert.equal(app.elements.get('overlay').classList.contains('open'),false);
+    assert.equal(app.elements.get('toast').textContent,'Profile saved.');
 });

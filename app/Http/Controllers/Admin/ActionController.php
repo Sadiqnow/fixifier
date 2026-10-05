@@ -75,6 +75,9 @@ class ActionController extends Controller
                 || ($b->service_area && mb_strtolower(trim($b->service_area)) !== mb_strtolower(trim($data['service_area'])))) {
                 throw ValidationException::withMessages(['technician_id' => 'Choose an approved, active, available technician matching the category and confirmed service area.']);
             }
+            if ($b->scheduled_at) {
+                app(\App\Services\TechnicianAvailabilityService::class)->assertBookable($tech, \Carbon\CarbonImmutable::parse($b->scheduled_at), $b->quotation?->duration_minutes ?? 60, $b->travel_buffer_minutes ?? 0, $b->id);
+            }
             $b->update(['technician_id' => $tech->id, 'request_accepted_at' => null, 'service_area' => $tech->technicianProfile->service_location, 'lock_version' => $b->lock_version + 1]);
             Audit::record('booking.assigned', $b, ['technician_id' => $tech->id, 'service_area' => $b->service_area, 'reason' => $data['reason']]);
         }, 3);

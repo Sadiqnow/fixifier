@@ -63,7 +63,7 @@
             html+=`<section><h3>Work round ${round.number}</h3><p>${esc(round.corrective_work||'Original agreed scope')}</p><p>${esc(round.completion_notes||'Completion not submitted')}</p><p>Review: ${esc(round.review||'Pending')} · ${esc(round.reviewed_at)}</p><div class="journey-grid">${job.evidence.filter(e=>e.work_round===round.number).map(e=>`<div><b>${esc(e.type)}</b><img data-jphoto="${e.id}" alt="${esc(e.type)} evidence"><p>${esc(e.note)}</p><small>Uploaded ${esc(e.created_at)}</small></div>`).join('')}</div></section>`;
         }
         if(tech && ['confirmed','in_progress'].includes(job.status)){
-            html+=form('evidence','Upload work evidence',select('type','Stage',job.status==='confirmed'?['before']:['before','after'])+fileField('photo')+area('note','Evidence note'));
+            html+=form('evidence','Upload work evidence',select('type','Stage',job.status==='confirmed'?['before']:['before','during','after'])+fileField('photo')+area('note','Evidence note'));
             if(job.status==='confirmed')html+=`<section>${button('start','Start work')}</section>`;
             else html+=form('progress','Add progress update',area('body','Progress'))+form('submit','Submit completion',area('completion_notes','Completion notes'));
         }

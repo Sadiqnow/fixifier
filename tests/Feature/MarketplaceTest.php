@@ -88,6 +88,30 @@ class MarketplaceTest extends TestCase
             ->assertJsonPath('data.is_available', true);
 
         $this->assertDatabaseHas('technician_profiles', ['user_id' => $technician->id, 'trade' => 'Electrical', 'service_location' => 'Lagos', 'is_available' => true]);
+        $this->getJson('/api/v1/me')->assertOk()
+            ->assertJsonPath('technician_profile.skills', $payload['skills'])
+            ->assertJsonPath('technician_profile.bio', $payload['bio'])
+            ->assertJsonPath('technician_profile.indicative_price_minor', 250000)
+            ->assertJsonPath('technician_profile.availability_notes', $payload['availability_notes']);
+
+        $this->putJson('/api/v1/technician/profile', array_replace($payload, [
+            'indicative_price_minor' => null, 'availability_notes' => null, 'is_available' => false,
+            'user_id' => 99999, 'kyc_status' => 'verified', 'is_active' => true,
+        ]))->assertOk();
+        $this->getJson('/api/v1/me')->assertOk()
+            ->assertJsonPath('technician_profile.indicative_price_minor', null)
+            ->assertJsonPath('technician_profile.starting_price_minor', null)
+            ->assertJsonPath('technician_profile.availability_notes', null)
+            ->assertJsonPath('technician_profile.kyc_status', 'pending');
+        $this->assertDatabaseHas('technician_profiles', ['user_id' => $technician->id, 'is_available' => false]);
+        $this->assertDatabaseMissing('technician_profiles', ['user_id' => 99999]);
+
+        $this->putJson('/api/v1/technician/profile', array_replace($payload, ['bio' => 'Too short']))
+            ->assertUnprocessable()->assertJsonValidationErrors('bio');
+        $this->assertDatabaseHas('technician_profiles', ['user_id' => $technician->id, 'bio' => $payload['bio']]);
+
+        Sanctum::actingAs($this->account('customer'));
+        $this->putJson('/api/v1/technician/profile', $payload)->assertForbidden();
     }
 
     public function test_technician_profile_update_accepts_legacy_profile_field_names(): void
