@@ -15,6 +15,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::middleware(['auth:sanctum', EnsureActiveAccount::class])->group(function () {
+        Route::get('/technician/dashboard', \App\Http\Controllers\Api\V1\TechnicianDashboardController::class);
         Route::get('/technician/schedule', [\App\Http\Controllers\Api\V1\TechnicianScheduleController::class, 'index']);
         Route::get('/technicians/{technician}/slots', [\App\Http\Controllers\Api\V1\TechnicianScheduleController::class, 'slots']);
         Route::put('/technician/schedule', [\App\Http\Controllers\Api\V1\TechnicianScheduleController::class, 'update']);

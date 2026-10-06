@@ -1,7 +1,7 @@
 'use strict';
 
 const journeySections = {
-    overview: ['Professional workspace', 'Overview', 'Review new requests and move assigned work forward.'],
+    overview: ['Professional OS', 'Command Centre', 'Your work, customer feedback and upcoming appointments in one place.'],
     requests: ['Step 01 · Assignment', 'Incoming requests', 'Review the problem, location and preferred time before sending a quotation.'],
     schedule: ['Operational availability', 'Schedule & availability', 'Manage recurring hours, blocked time and scheduled appointments.'],
     jobs: ['Service work', 'My jobs', 'Open an assignment to review its details and available actions.'],
@@ -36,14 +36,21 @@ function journeyCard(job) {
 function journeyList(title, records) { return panel(title, records.length ? records.map(journeyCard).join('') : empty('No matching jobs on this page')); }
 function journeyOverview() {
     const active = jobs.filter(j => !['completed','cancelled'].includes(j.status));
-    const releases = jobs.filter(j => j.payment?.status === 'released');
+    const counts = dashboard?.counts || {};
     const stats = [
-        ['New requests', jobs.filter(j => j.status === 'requested').length, 'Awaiting quotation'],
-        ['Active jobs', active.length, 'Across current stages'],
-        ['Ready for evidence', jobs.filter(j => ['confirmed','in_progress'].includes(j.status)).length, 'Work to record'],
-        ['Recorded releases', money(releases.reduce((sum,j) => sum + Number(j.payment.amount_minor),0)), 'Recorded gross amount'],
+        ['New requests', counts.requested || 0, 'Across all your bookings'],
+        ['Active jobs', dashboard?.active_jobs || 0, 'Across current stages'],
+        ['Completed jobs', dashboard?.completed_jobs || 0, 'Your full booking history'],
+        ['Recorded releases', money(dashboard?.recorded_releases_minor || 0), 'Recorded gross amount'],
     ];
-    return `<div class="grid stats">${stats.map(([title,value,note]) => `<div class="card metric"><span>${title}</span><strong>${value}</strong><small>${note}</small></div>`).join('')}</div><div class="grid split">${journeyList('Jobs needing attention',active.slice(0,4))}<aside class="stack">${panel('Profile status',detailRow('Verification',readable(profile?.kyc_status || 'not_submitted')) + detailRow('Availability',profile?.is_available ? 'Available' : 'Unavailable') + '<div class="actions"><button class="btn" data-section="profile">View profile</button><button class="btn sm" data-profile-edit>Edit details</button></div>')}${panel('Recent bookings',jobs.slice(0,4).map(j => `<div class="item"><strong>${esc(j.reference)}</strong><p>${esc(journeyLabels[j.status])} · ${esc(when(j.updated_at))}</p></div>`).join('') || empty('No activity yet'))}${notice('Customer approval and payment release are separate events. Demo-provider payment records do not represent real transfers.')}</aside></div>`;
+    const upcoming = (dashboard?.upcoming || []).map(job => `<div class="item"><strong>${esc(job.reference)} · ${esc(job.service_category)}</strong><p>${esc(when(job.scheduled_at))}</p><button class="btn sm" data-journey-id="${Number(job.id)}">Open job workspace</button></div>`).join('');
+    const feedback = (dashboard?.recent_reviews || []).map(review => `<div class="item"><strong>${Number(review.stars)} / 5</strong><p>${esc(review.comment)}</p><small>${esc(when(review.created_at))}</small></div>`).join('');
+    return `<div class="grid stats">${stats.map(([title,value,note]) => `<div class="card metric"><span>${title}</span><strong>${value}</strong><small>${note}</small></div>`).join('')}</div>
+        <div class="grid split"><div class="stack">${panel('Upcoming appointments', upcoming || '<p class="muted">No upcoming appointments.</p>')}${journeyList('Jobs on the current booking page',active.slice(0,4))}<button class="btn" data-section="jobs">View all jobs</button></div><aside class="stack">
+        ${panel('Professional profile',detailRow('Verification',readable(profile?.kyc_status || 'not_submitted')) + detailRow('Availability',profile?.is_available ? 'Available' : 'Unavailable') + `<div class="actions"><button class="btn" data-profile-edit>Edit profile</button><button class="btn sm" data-section="schedule">Manage availability</button></div>`)}
+        ${panel('Customer feedback',detailRow('Average rating',dashboard?.rating_count ? `${dashboard.rating_average} / 5 · ${dashboard.rating_count} reviews` : 'No published reviews yet') + feedback)}
+        ${panel('Notifications',`<p>${Number(dashboard?.unread_notifications || 0)} unread updates</p><button class="btn" data-journey-tool="notifications">Read updates</button>`)}
+        ${notice('Customer approval and payment release are separate events. Recorded releases can include test-provider records and do not confirm a live transfer.')}</aside></div>`;
 }
 async function openProfileEditor() {
     const directory = await api('/technicians');
@@ -164,8 +171,8 @@ function renderJourney() {
         if (section === 'requests') body += `<div class="status-summary"></div>` + notice('Open the job workspace to accept or decline a request. Accept the request before submitting a quotation.');
         if (section === 'disputes') body += `<div class="status-summary"></div>` + notice('Open a job to read dispute details. Only the administrator can decide rework, release or refund.');
     }
-    const recordsPage = !['profile','verification','flow','schedule'].includes(section);
-    $('content').innerHTML = `<div class="head"><div><div class="eyebrow">${eyebrow}</div><h1>${section === 'overview' ? `Welcome, ${esc(user.name)}` : title}</h1><p>${description}</p></div>${button('Refresh','refresh',0)}</div>${recordsPage ? '<p class="muted small">Records, filters and totals reflect the current booking page.</p>' : ''}${body}${recordsPage ? `<div class="actions pager"><button class="btn" data-action="previous" ${page <= 1 ? 'disabled' : ''}>Previous</button><span>Page ${page} of ${last}</span><button class="btn" data-action="next" ${page >= last ? 'disabled' : ''}>Next</button></div>` : ''}`;
+    const recordsPage = !['overview','profile','verification','flow','schedule'].includes(section);
+    $('content').innerHTML = `<div class="head ${section === 'overview' ? 'command-hero' : ''}"><div><div class="eyebrow">${eyebrow}</div><h1>${section === 'overview' ? `Welcome, ${esc(user.name)}` : title}</h1><p>${description}</p></div>${button('Refresh','refresh',0)}</div>${recordsPage ? '<p class="muted small">Records, filters and totals reflect the current booking page.</p>' : ''}${body}${recordsPage ? `<div class="actions pager"><button class="btn" data-action="previous" ${page <= 1 ? 'disabled' : ''}>Previous</button><span>Page ${page} of ${last}</span><button class="btn" data-action="next" ${page >= last ? 'disabled' : ''}>Next</button></div>` : ''}`;
 }
 document.addEventListener('click', event => {
     const sectionButton = event.target.closest('[data-section]');

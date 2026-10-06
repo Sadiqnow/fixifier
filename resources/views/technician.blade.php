@@ -7,25 +7,30 @@
     <meta name="api-base" content="{{ url('/api/v1') }}">
     <meta name="login-url" content="{{ url('/technician/login') }}">
     <meta name="verification-url" content="{{ route('job.verification') }}">
-    <title>Fixifier Plus · Technician portal</title>
+    <title>Fixifier Professional OS · Technician portal</title>
     <link rel="stylesheet" href="{{ asset('css/technician.css') }}?v=journey-1">
-    <script src="{{ asset('js/technician-views.js') }}?v=profile-save-2" defer></script>
+    <link rel="stylesheet" href="{{ asset('css/technician-professional.css') }}?v=os-1">
+    <script src="{{ asset('js/technician-views.js') }}?v=os-1" defer></script>
     <script src="{{ asset('js/technician-schedule.js') }}?v=schedule-1" defer></script>
-    <script src="{{ asset('js/technician.js') }}?v=journey-1" defer></script>
+    <script src="{{ asset('js/technician.js') }}?v=os-1" defer></script>
 </head>
 <body>
 <div class="shell">
     <aside class="side" id="sidebar" aria-label="Technician navigation">
-        <a class="brand" href="{{ url('/') }}"><b>F</b>fixifier <small>PLUS</small></a>
-        <div>
-            <div class="sidehead">Technician</div>
-            <nav class="nav" id="nav" aria-label="Workspace sections">
-                <button type="button" data-page="schedule"><span class="icon" aria-hidden="true">◷</span>Schedule &amp; availability</button>
-                @foreach ([['overview','▦','Overview'],['requests','◫','Incoming requests'],['jobs','⚒','My jobs'],['quotes','▤','Quotes'],['evidence','◉','Work evidence'],['disputes','⚑','Disputes & rework'],['earnings','⇄','Earnings & payouts'],['verification','✓','Verification'],['profile','◌','Profile & availability'],['flow','≡','Process flow']] as [$page, $icon, $label])
+        <a class="brand" href="{{ url('/') }}"><b>F</b><span class="brandtext">fixifier<small>PROFESSIONAL OS</small></span></a>
+        <nav class="nav" id="nav" aria-label="Workspace sections">
+            @foreach ([
+                'Work' => [['overview','◈','Command Centre'],['requests','◫','Incoming requests'],['schedule','◷','Schedule & availability'],['jobs','⚒','Job workspace']],
+                'Business' => [['quotes','▤','Quotations'],['earnings','⇄','Earnings & payouts']],
+                'Identity' => [['profile','◌','Professional profile'],['verification','✓','Verification & documents']],
+                'Control' => [['evidence','◉','Work evidence'],['disputes','⚑','Disputes & rework'],['flow','≡','Process flow']],
+            ] as $group => $items)
+                <div class="sidehead">{{ $group }}</div>
+                @foreach ($items as [$page, $icon, $label])
                     <button type="button" data-page="{{ $page }}"><span class="icon" aria-hidden="true">{{ $icon }}</span>{{ $label }}</button>
                 @endforeach
-            </nav>
-        </div>
+            @endforeach
+        </nav>
         <div class="sidefoot">Your technician workspace<br>Requests, quotes and private work evidence.
             <a class="verification-link" href="{{ route('job.verification') }}">Open job verification →</a>
         </div>

@@ -4,7 +4,7 @@ const base = document.querySelector('meta[name="api-base"]').content;
 const login = document.querySelector('meta[name="login-url"]').content;
 const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = n => new Intl.NumberFormat('en-NG',{style:'currency',currency:'NGN'}).format(Number(n || 0)/100);
-let user, profile, jobs=[], page=1, last=1, section='overview', urls=[], returnFocus=null, loadVersion=0;
+let user, profile, dashboard=null, jobs=[], page=1, last=1, section='overview', urls=[], returnFocus=null, loadVersion=0;
 async function api(path, method='GET', body, image=false) {
     const token=sessionStorage.getItem('fixifier-token');
     if(!token) { location.replace(login); throw new Error('Please sign in.'); }
@@ -43,9 +43,9 @@ async function load(targetPage=page) {
     const version=++loadVersion;
     $('content').setAttribute('aria-busy','true');
     try {
-        const result=await api(`/bookings?page=${targetPage}`);
+        const [result,summary]=await Promise.all([api(`/bookings?page=${targetPage}`),api('/technician/dashboard')]);
         if(version!==loadVersion)return;
-        jobs=result.data; last=result.last_page; page=result.current_page || targetPage; render();
+        dashboard=summary.data; jobs=result.data; last=result.last_page; page=result.current_page || targetPage; render();
     } finally { if(version===loadVersion)$('content').setAttribute('aria-busy','false'); }
 }
 function button(title,action,id) { return `<button class="btn ${['quote','upload','submit'].includes(action) ? 'primary' : 'secondary'}" data-action="${action}" data-id="${id}">${title}</button>`; }
